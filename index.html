@@ -87,7 +87,8 @@ input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--ng);ba
 .seg button{font:inherit;font-size:14px;font-weight:700;min-height:44px;border:0;background:var(--card);color:var(--accent);cursor:pointer;padding:0 8px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .hint{margin:0;font-size:12.5px;color:var(--muted)}
-.trio{display:grid;grid-template-columns:minmax(140px,150px) minmax(0,1fr);gap:0 10px}
+.trio{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
+.trio input{min-width:0}
 .trio .field:last-child{grid-column:1/-1}
 .trio input[type=date]{padding:9px 6px}
 .layer{display:grid;grid-template-columns:minmax(0,1fr) 108px 44px;gap:6px;margin-bottom:6px}
