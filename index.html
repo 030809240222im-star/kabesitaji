@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>壁下地材強度検討</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: sticky result bar above a two-column calculation sheet (inputs left, working right) */
+  --paper:#eef2f6; --card:#ffffff; --ink:#16202b; --muted:#566574; --rule:#d3dbe4;
+  --accent:#1b5fa6; --accent-ink:#ffffff; --accent-soft:#e2edf9;
+  --ok:#17794a; --ok-bg:#e1f3e9; --ng:#b3261e; --ng-bg:#fbe4e1; --warn:#8a5200; --warn-bg:#fff0d0;
+  --font-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --font-num:"IBM Plex Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e141a; --card:#17202a; --ink:#e8edf2; --muted:#9aa7b5; --rule:#2b3743;
+    --accent:#7db3ee; --accent-ink:#0b1118; --accent-soft:#1c2b3b;
+    --ok:#62c78f; --ok-bg:#12301f; --ng:#ff8f86; --ng-bg:#3a1816; --warn:#f1b65c; --warn-bg:#33270f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e141a; --card:#17202a; --ink:#e8edf2; --muted:#9aa7b5; --rule:#2b3743;
+  --accent:#7db3ee; --accent-ink:#0b1118; --accent-soft:#1c2b3b;
+  --ok:#62c78f; --ok-bg:#12301f; --ng:#ff8f86; --ng-bg:#3a1816; --warn:#f1b65c; --warn-bg:#33270f;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--font-body);-webkit-text-size-adjust:100%}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header{padding:20px 0 0}
+.eyebrow{margin:0;font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.08em}
+h1{margin:2px 0 12px;font-size:24px;line-height:1.3;letter-spacing:.02em;text-wrap:balance}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--rule);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{flex:none}
+.tab{font:inherit;font-size:15px;padding:10px 16px;border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);cursor:pointer;min-height:44px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.summary{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--rule);padding:8px 0}
+.sum-grid{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:8px;align-items:stretch}
+.pill{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:64px;padding:4px 10px;border-radius:8px;font-weight:700;background:var(--ok-bg);color:var(--ok);line-height:1.2}
+.pill small{font-size:11px;font-weight:400}
+.pill b{font-size:20px;font-family:var(--font-num)}
+.pill.ng{background:var(--ng-bg);color:var(--ng)}
+.pill.na{background:var(--warn-bg);color:var(--warn)}
+.tile{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:4px 10px;line-height:1.25;min-width:0}
+.tile small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile b{font-family:var(--font-num);font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
+.tile.ng{border-color:var(--ng)}
+.tile.ng b{color:var(--ng)}
+.tile i{font-style:normal;font-size:11px;font-weight:700;margin-left:4px;color:var(--ok)}
+.tile.ng i{color:var(--ng)}
+.tile.ref i{color:var(--warn)}
+.tile i{white-space:nowrap}
+.tile.ref b{color:var(--muted)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding:16px 0 48px}
+@media (min-width:900px){
+  .layout{grid-template-columns:380px minmax(0,1fr);align-items:start}
+  #inputs{position:sticky;top:84px;max-height:calc(100vh - 100px);overflow-y:auto}
+}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px;min-width:0}
+.card+.card{margin-top:16px}
+.card h2{margin:0 0 12px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field>label,.lbl{font-size:13px;color:var(--muted)}
+.lbl em{font-style:normal;color:var(--ink);font-family:var(--font-num);margin-left:6px}
+input,select{font:inherit;font-size:16px;width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)}
+input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--ng);background:var(--ng-bg)}
+.unit{position:relative}
+.unit input{padding-right:64px;font-family:var(--font-num)}
+.unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:14px;min-height:38px;padding:0 14px;border:1px solid var(--rule);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
+.chip.num{font-family:var(--font-num)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:16px;border:1px solid var(--accent);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;font-weight:700;min-height:44px;border:0;background:var(--card);color:var(--accent);cursor:pointer;padding:0 8px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
+.trio{display:grid;grid-template-columns:minmax(140px,150px) minmax(0,1fr);gap:0 10px}
+.trio .field:last-child{grid-column:1/-1}
+.trio input[type=date]{padding:9px 6px}
+.layer{display:grid;grid-template-columns:minmax(0,1fr) 108px 44px;gap:6px;margin-bottom:6px}
+.layer .unit input{padding-left:10px;padding-right:32px}
+.layer .custom{grid-column:1/-1}
+.ov{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 44px;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--rule)}
+.ov .o-opt{grid-column:1/-1}
+.ov .o-note{grid-column:1/-1}
+.ov .unit input{padding-right:58px}
+.icon-btn{font:inherit;font-size:18px;min-height:44px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer}
+.add-btn{font:inherit;font-size:14px;min-height:40px;border:1px dashed var(--accent);border-radius:8px;background:none;color:var(--accent);cursor:pointer;padding:0 12px;justify-self:start}
+details{border-top:1px solid var(--rule);padding-top:12px}
+summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:700;min-height:32px}
+details .field:first-of-type{margin-top:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{font:inherit;font-size:14px;min-height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.toast{font-size:13px;color:var(--ok);align-self:center}
+#copyBox{width:100%;min-height:140px;margin-top:10px;font-family:var(--font-num);font-size:12.5px}
+
+.sec{margin-bottom:22px}
+.sec:last-child{margin-bottom:0}
+.sec h3{margin:0 0 2px;padding-bottom:6px;font-size:15px;border-bottom:2px solid var(--ink)}
+.sec h3 small{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:9px 0;border-bottom:1px solid var(--rule)}
+.row .k small{color:var(--muted);margin-left:4px;font-family:var(--font-num)}
+.row .v{font-family:var(--font-num);font-weight:500;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .v .u{color:var(--muted);font-size:12px;margin-left:4px;font-weight:400}
+.row .x{grid-column:1/-1;font-family:var(--font-num);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.row.faint .k,.row.faint .v{color:var(--muted)}
+.props{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0 2px}
+@media (min-width:520px){.props{grid-template-columns:repeat(4,1fr)}}
+.props div{border:1px solid var(--rule);border-radius:8px;padding:6px 10px}
+.props small{display:block;font-size:11.5px;color:var(--muted)}
+.props b{font-family:var(--font-num);font-weight:500}
+.props b span{font-size:11px;color:var(--muted);margin-left:3px}
+.judge{border:1px solid var(--rule);border-left:6px solid var(--ok);border-radius:8px;padding:12px 14px;margin:12px 0;background:var(--card)}
+.judge.ng{border-left-color:var(--ng)}
+.judge.ref{border-left-color:var(--muted)}
+.judge-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.judge-top span{font-size:14px}
+.badge{font-weight:700;font-size:13px;padding:1px 12px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
+.ng .badge{background:var(--ng-bg);color:var(--ng)}
+.ref .badge{background:var(--warn-bg);color:var(--warn)}
+.ref.ok .badge{background:var(--ok-bg);color:var(--ok)}
+.judge-main{display:flex;align-items:baseline;gap:10px;margin-top:2px}
+.judge-val{font-family:var(--font-num);font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+.judge-lim{font-family:var(--font-num);color:var(--muted);font-size:14px}
+.judge .x{margin:4px 0 0;font-family:var(--font-num);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.meter{height:6px;margin-top:8px;border-radius:3px;background:var(--rule);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok)}
+.ng .meter i{background:var(--ng)}
+.ref .meter i{background:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.meter i{transition:width .2s}}
+.err ul{margin:0;padding-left:20px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 10px}
+.alts{display:grid;gap:8px;margin-top:10px}
+.alt{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--ok);border-left-width:6px;border-radius:8px;padding:10px 12px}
+.alt.none{border-color:var(--rule);opacity:.8}
+.alt b{font-size:14px}
+.alt .hint{margin:2px 0 0}
+.alt-v{margin:4px 0 0;font-family:var(--font-num);font-size:12px;color:var(--ok)}
+.alt .btn{flex:none}
+#altCard{border-color:var(--ng);margin-bottom:16px}
+.fig{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0 4px}
+.fig figure{margin:0;flex:1 1 220px;max-width:300px;border:1px solid var(--rule);border-radius:8px;padding:8px;background:var(--card)}
+.fig figure.wide{max-width:380px;flex-basis:300px}
+.fig svg{display:block;width:100%;height:auto;color:var(--ink)}
+.fig figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+.fig .t{font:12px var(--font-body);fill:currentColor}
+.fig .n{font:11.5px var(--font-num);fill:currentColor}
+.fig .acc{color:var(--accent)} .fig .red{color:var(--ng)} .fig .mut{color:var(--muted)}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:13.5px;margin:10px 0 0}
+.guide{display:grid;gap:8px}
+.guide .g{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--rule);align-items:center}
+.guide .g span:first-child{font-size:14px}
+.tag{font-size:12px;font-weight:700;padding:1px 10px;border-radius:999px;background:var(--ok-bg);color:var(--ok);white-space:nowrap}
+.tag.over{background:var(--warn-bg);color:var(--warn)}
+.tag.na{background:var(--rule);color:var(--muted)}
+
+.panel{padding:16px 0 48px;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;font-size:13px;min-width:720px;width:100%}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td{font-family:var(--font-num)}
+th{font-size:12px;color:var(--muted);font-weight:700;background:var(--card)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);font-family:var(--font-body)}
+td.txt,th.txt{text-align:left;font-family:var(--font-body)}
+td.flag{background:var(--warn-bg);color:var(--warn);font-weight:700}
+.src{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+.prose h2{font-size:16px;color:var(--ink);letter-spacing:0;margin:0 0 8px}
+.prose h2:not(:first-child){margin-top:22px}
+.prose ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.prose p{margin:0 0 8px}
+.check{display:grid;grid-template-columns:1.4fr repeat(2,1fr);gap:4px 12px;font-family:var(--font-num);font-size:12.5px;margin-top:8px}
+.check .h{font-family:var(--font-body);color:var(--muted);font-size:12px}
+.check .d{grid-column:1/-1;font-family:var(--font-body);font-weight:700;margin-top:10px;font-size:13px}
+.check span:nth-child(3n+2),.check span:nth-child(3n){text-align:right}
+.check .d{text-align:left!important}
+
+.rpt{position:fixed;left:-20000px;top:0;
+  --paper:#fff;--card:#fff;--ink:#16202b;--muted:#566574;--rule:#d3dbe4;--accent:#1b5fa6;--accent-ink:#fff;--accent-soft:#e2edf9;
+  --ok:#17794a;--ok-bg:#e1f3e9;--ng:#b3261e;--ng-bg:#fbe4e1;--warn:#8a5200;--warn-bg:#fff0d0;color:var(--ink);font:13px/1.55 var(--font-body)}
+.rpt *{font-family:var(--font-body)!important;font-variant-numeric:normal!important;font-variant:normal!important;font-feature-settings:normal!important}
+.rpt .pg{width:794px;height:1123px;padding:46px 50px 56px;background:#fff;position:relative;overflow:hidden;box-sizing:border-box}
+.rpt .pg+.pg{margin-top:20px}
+.rpt .foot{position:absolute;left:50px;right:50px;bottom:22px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:6px}
+.rpt .blk{margin-bottom:10px}
+.rpt h1{font-size:22px;margin:0 0 4px;text-align:center;letter-spacing:.1em}
+.rpt .sub{text-align:center;color:var(--muted);margin:0 0 14px}
+.rpt table.kv{width:100%;min-width:0;border-collapse:collapse;font-size:12.5px}
+.rpt table.kv th,.rpt table.kv td{border:1px solid var(--rule);padding:5px 8px;text-align:left;white-space:normal;position:static;font-family:var(--font-body)}
+.rpt table.kv th{width:26%;background:#f3f6f9;color:var(--ink)}
+.rpt .verdict{display:inline-block;font-weight:700;padding:1px 14px;border-radius:999px}
+.rpt .verdict.ok{background:var(--ok-bg);color:var(--ok)} .rpt .verdict.ng{background:var(--ng-bg);color:var(--ng)}
+.rpt .sec{margin:0}
+.rpt .fig figure{max-width:300px}
+.rpt .alt .btn,.rpt .meter,.rpt .alt-note{display:none}
+.rpt .judge{margin:8px 0}
+@media print{
+  .tabs,.btns,.summary,#copyBox,details{display:none!important}
+  body{background:#fff;color:#000}
+  .layout{grid-template-columns:1fr}
+  #inputs{position:static;max-height:none}
+}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">軽量鉄骨スタッド（WS形）</p>
+  <h1>壁下地材強度検討</h1>
+  <nav class="tabs" role="tablist" aria-label="表示切り替え">
+    <button class="tab" role="tab" id="tab-calc" aria-selected="true" aria-controls="panel-calc">計算</button>
+    <button class="tab" role="tab" id="tab-ref" aria-selected="false" aria-controls="panel-ref">資料</button>
+    <button class="tab" role="tab" id="tab-cmp" aria-selected="false" aria-controls="panel-cmp">メーカー比較</button>
+    <button class="tab" role="tab" id="tab-data" aria-selected="false" aria-controls="panel-data">データ登録</button>
+    <button class="tab" role="tab" id="tab-notes" aria-selected="false" aria-controls="panel-notes">前提・修正点</button>
+  </nav>
+</header>
+
+<div class="summary" id="summaryBar"><div class="wrap sum-grid" id="summary"></div></div>
+
+<main class="wrap">
+  <section id="panel-calc" role="tabpanel" aria-labelledby="tab-calc">
+    <div class="layout">
+      <form id="inputs" class="card" autocomplete="off">
+        <h2>入力</h2>
+        <div class="seg" id="modeSeg" role="group" aria-label="検討の種類">
+          <button type="button" data-v="wall" aria-pressed="true">壁のみ（標準）</button>
+          <button type="button" data-v="ceiling" aria-pressed="false">天井を受ける壁</button>
+        </div>
+        <div class="trio">
+          <div class="field"><label for="date">日付</label><input id="date" type="date"></div>
+          <div class="field"><label for="company">検討会社名</label><input id="company" type="text" placeholder="例：〇〇建設株式会社"></div>
+          <div class="field"><label for="maker">検討メーカー名</label><input id="maker" type="text" placeholder="例：関包スチール株式会社"></div>
+        </div>
+        <div class="field"><label for="wallType">吉野石膏 耐火遮音システム（壁種を選ぶと材料を自動入力）</label>
+          <select id="wallType"></select>
+          <p class="hint" id="wallTypeHint"></p></div>
+        <div class="field"><label for="stud">検討部材</label><select id="stud"></select><p class="hint" id="studDim"></p></div>
+        <div class="field"><span class="lbl">フレドメ（振れ止め）</span>
+          <div class="chips" data-state="bracing"><button type="button" class="chip" data-v="有">有</button><button type="button" class="chip" data-v="無">無</button></div></div>
+        <div class="field"><span class="lbl">細長比に使う断面2次半径 i</span>
+          <div class="chips" data-state="axis"><button type="button" class="chip" data-v="auto">自動</button><button type="button" class="chip" data-v="x">強軸 ix</button><button type="button" class="chip" data-v="y">弱軸 iy</button></div>
+          <p class="hint" id="axisHint"></p></div>
+        <div class="field" id="LbField"><label for="Lb">フレドメ間隔 Lb（弱軸の座屈長さ）</label>
+          <div class="unit"><input id="Lb" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <p class="hint">標準は約1,200mm間隔（公共建築工事標準仕様書・JASS26）。強軸 L/ix と弱軸 Lb/iy の大きい方で評価します。</p></div>
+        <div class="field"><label for="a">スタッドピッチ a（p）</label>
+          <div class="unit"><input id="a" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <div class="chips" data-for="a"><button type="button" class="chip num" data-v="22.75">22.75</button><button type="button" class="chip num" data-v="30.3">30.3</button><button type="button" class="chip num" data-v="45.5">45.5</button><button type="button" class="chip num" data-v="60.6">60.6</button></div>
+          <p class="hint">千鳥配置は 60.6（千鳥@303）</p></div>
+        <div class="field"><label for="L" id="lblL">壁高 L（座屈長さ Lk = L）</label>
+          <div class="unit"><input id="L" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <p class="hint" id="LinM"></p></div>
+        <div class="field" data-mode="ceiling" hidden><label for="ch">天井面の高さ ch（床から）</label>
+          <div class="unit"><input id="ch" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <p class="hint" id="ahHint"></p></div>
+        <div class="field" data-mode="ceiling" hidden><label for="Lc">天井の奥行 L（壁に直交する方向の長さ）</label>
+          <div class="unit"><input id="Lc" type="number" step="any" inputmode="decimal"><span>cm</span></div></div>
+        <div class="field"><span class="lbl" id="lblLayers">このスタッドが支える面材</span>
+          <p class="hint" style="margin-bottom:4px">両面張りは両面分を入力。千鳥・片面張り（シャフト壁）は片側分。</p>
+          <div id="layers"></div>
+          <button type="button" class="add-btn" id="addLayer">＋ 面材を追加</button>
+          <span class="lbl" style="margin-top:6px">面重量の基準</span>
+          <div class="chips" data-state="basis"><button type="button" class="chip" data-v="cat">吉野石膏カタログ</button><button type="button" class="chip" data-v="kanpo">関包スチール計算書</button></div>
+          <p class="hint" id="W1Hint"></p></div>
+        <div class="field"><span class="lbl">増し貼り・仕上げ（壁種の表面に追加）</span>
+          <div id="over"></div>
+          <button type="button" class="add-btn" id="addOver">＋ 増し貼り・仕上げを追加</button>
+          <p class="hint" id="overHint"></p></div>
+        <div class="field"><label for="W2">下地材重量 W2（スタッド・ランナー・振れ止め等）</label>
+          <div class="chips" data-state="W2mode"><button type="button" class="chip" data-v="auto">ピッチから自動</button><button type="button" class="chip" data-v="manual">手入力</button></div>
+          <div class="unit"><input id="W2" type="number" step="any" inputmode="decimal"><span>kg/m²</span></div>
+          <p class="hint" id="W2Hint"></p></div>
+        <div class="field" data-mode="ceiling" hidden><label for="Wc">天井重量 Wc</label>
+          <div class="unit"><input id="Wc" type="number" step="any" inputmode="decimal"><span>kg/m²</span></div>
+          <p class="hint">関包計算書の例: GB-R9.5（7.2）＋下地材（5）＝ 12.2</p></div>
+        <div class="field" data-mode="wall"><label for="k">水平地震時の設計震度 k</label>
+          <div class="unit"><input id="k" type="number" step="any" inputmode="decimal"><span>G</span></div>
+          <div class="chips" data-for="k"><button type="button" class="chip num" data-v="0.6">0.6</button><button type="button" class="chip num" data-v="1">1.0</button><button type="button" class="chip num" data-v="1.5">1.5</button><button type="button" class="chip num" data-v="2">2.0</button></div></div>
+        <div class="field" data-mode="ceiling" hidden><label for="kh">設計震度 水平 kh</label>
+          <div class="unit"><input id="kh" type="number" step="any" inputmode="decimal"><span>G</span></div>
+          <div class="chips" data-for="kh"><button type="button" class="chip num" data-v="0.6">0.6</button><button type="button" class="chip num" data-v="1">1.0</button><button type="button" class="chip num" data-v="1.5">1.5</button><button type="button" class="chip num" data-v="2">2.0</button></div></div>
+        <div class="field" data-mode="ceiling" hidden><label for="kv">設計震度 鉛直 kv</label>
+          <div class="unit"><input id="kv" type="number" step="any" inputmode="decimal"><span>G</span></div></div>
+        <details>
+          <summary>詳細設定</summary>
+          <div class="field"><label for="F">基準強度 F（fcの算定に使用）</label><div class="unit"><input id="F" type="number" step="any" inputmode="decimal"><span>kg/cm²</span></div></div>
+          <div class="field"><label for="fb">短期許容曲げ応力度 fb</label><div class="unit"><input id="fb" type="number" step="any" inputmode="decimal"><span>kg/cm²</span></div></div>
+          <div class="field"><label for="E">ヤング率 E</label><div class="unit"><input id="E" type="number" step="any" inputmode="decimal"><span>kg/cm²</span></div></div>
+          <div class="field"><label for="fcManual">長期 fc を手入力で指定（空欄なら自動算定）</label><div class="unit"><input id="fcManual" type="number" step="any" inputmode="decimal" placeholder="自動"><span>kg/cm²</span></div></div>
+          <div class="field"><label for="deflDen">たわみの参考基準 1 /</label><div class="unit"><input id="deflDen" type="number" step="any" inputmode="decimal"><span>1/n</span></div></div>
+        </details>
+        <div class="btns">
+          <button type="button" class="btn primary" id="pdfBtn" hidden>PDFで発行</button>
+          <button type="button" class="btn" id="copy">結果をコピー</button>
+          <button type="button" class="btn" id="reset">初期値に戻す</button>
+          <span class="toast" id="toast" role="status"></span>
+        </div>
+        <textarea id="copyBox" hidden readonly aria-label="コピー用の結果"></textarea>
+      </form>
+      <div id="results"></div>
+    </div>
+  </section>
+
+  <section id="panel-ref" class="panel" role="tabpanel" aria-labelledby="tab-ref" hidden>
+    <div class="card" id="refStud"></div>
+    <div class="card" id="refBoard"></div>
+    <div class="card" id="refGuide"></div>
+    <div class="card" id="refTall"></div>
+  </section>
+
+  <section id="panel-cmp" class="panel" role="tabpanel" aria-labelledby="tab-cmp" hidden>
+    <div class="card" id="cmpNow"></div>
+    <div class="card" id="cmpSize"></div>
+    <div class="card" id="cmpKirii"></div>
+  </section>
+
+  <section id="panel-data" class="panel" role="tabpanel" aria-labelledby="tab-data" hidden>
+    <div class="card">
+      <h2>メーカーデータの登録（蓄積して検討・比較に反映）</h2>
+      <p class="hint" style="margin-bottom:12px">メーカーのカタログや Web サイトの断面性能表から1行ずつ登録します。登録した部材は「検討部材」の選択肢、NG の対策案（補強材）、メーカー比較に反映されます。登録データはこの端末のブラウザに保存されます。他の端末や他の人に渡すときは「書き出し」で保存したファイルを、相手側で「読み込み」してください。</p>
+      <div class="field"><label for="dPaste">表から1行を貼り付け（タブ・カンマ・空白区切り）：名称 寸法 W A Ix Iy Zx Zy ix iy</label>
+        <textarea id="dPaste" rows="2" style="width:100%;font:13px var(--font-num);padding:8px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--ink)" placeholder="例：WS-65	65×45×0.8	1.13	1.44	10.56	4.36	3.25	1.61	2.71	1.74"></textarea>
+        <button type="button" class="btn" id="dParse" style="justify-self:start">貼り付けた行を下の欄に展開</button></div>
+      <div class="dgrid">
+        <div class="field"><label for="dMaker">メーカー</label><select id="dMaker"><option>桐井製作所</option><option>関包スチール</option><option>三洋工業</option><option>その他</option></select></div>
+        <div class="field"><label for="dKind">種別</label><select id="dKind"><option value="stud">スタッド</option><option value="rc">補強材</option><option value="other">その他</option></select></div>
+        <div class="field"><label for="dName">名称</label><input id="dName" type="text" placeholder="例：スタッド65形（WS-65）"></div>
+        <div class="field"><label for="dDim">寸法</label><input id="dDim" type="text" placeholder="例：65×45×0.8"></div>
+        <div class="field"><label for="dSize">壁厚方向の幅 mm</label><input id="dSize" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dW">W kg/m</label><input id="dW" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dA">A cm²</label><input id="dA" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dIx">Ix cm⁴（強軸）</label><input id="dIx" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dIy">Iy cm⁴</label><input id="dIy" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dZx">Zx cm³（強軸）</label><input id="dZx" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dZy">Zy cm³</label><input id="dZy" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="dix">ix cm</label><input id="dix" type="number" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="diy">iy cm</label><input id="diy" type="number" step="any" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label for="dSrc">出典（資料名・URL・ページ）</label><input id="dSrc" type="text" placeholder="例：桐井製作所 鋼製下地カタログ 2026.7 p.○"></div>
+      <p class="hint" id="dCheck"></p>
+      <div class="btns"><button type="button" class="btn primary" id="dSave">登録する</button><span class="toast" id="dToast" role="status"></span></div>
+    </div>
+    <div class="card" id="dList"></div>
+    <div class="card"><h2>登録データの書き出し・読み込み</h2>
+      <div class="btns"><button type="button" class="btn" id="dExport">書き出し（JSONファイル）</button>
+      <label class="btn" style="display:inline-flex;align-items:center;cursor:pointer">読み込み<input type="file" id="dImport" accept=".json,application/json" hidden></label>
+      <span class="toast" id="dToast2" role="status"></span></div>
+      <p class="hint" style="margin-top:8px">読み込みは、同じ内容の行を重ねずに追加します。</p></div>
+  </section>
+
+  <section id="panel-notes" class="panel prose" role="tabpanel" aria-labelledby="tab-notes" hidden>
+    <div class="card" id="notes"></div>
+  </section>
+</main>
+
+<script>
+// <calc>
+const LIMIT_LAMBDA = 250;
+const PI_CALC = Math.PI;       // 関包スチール計算書は π=3.14（Λ=128.19）。ここでは正確な π（Λ=128.26）
+const CUSTOM_ID = 'CUSTOM';
+
+/* 断面性能。W:kg/m, A:cm2, Ix/Iy:cm4, Zx/Zy:cm3, ix/iy/C1/C2:cm */
+const STUDS = [
+  {id:'WS-65J',  group:'JIS', name:'スタッド65形', code:'WS-65 JIS',  dim:'65×45×0.8',  size:65,  W:1.13, A:1.44, Ix:10.58, Iy:4.36, Zx:3.25, Zy:1.61, ix:2.71, iy:1.74, C1:null, C2:null, calc:true, src:'関包スチール計算書（Iy・Zy・W は第一金属製作所の同値品）'},
+  {id:'WS-100J', group:'JIS', name:'スタッド100形', code:'WS-100 JIS', dim:'100×45×0.8', size:100, W:null, A:1.72, Ix:28.14, Iy:null, Zx:5.63, Zy:null, ix:4.04, iy:1.67, C1:null, C2:null, calc:true, src:'関包スチール計算書', flag:{iy:'JIS品の iy は資料になく、カタログ値（一般品）です'}},
+  {id:'WS-50',  group:'CAT', name:'スタッド50形',  code:'WS-50',  dim:'50×45×0.8',  size:50,  W:1.05, A:1.3,  Ix:5.73,  Iy:3.78, Zx:2.29, Zy:1.47, ix:2.08, iy:1.69, C1:1.95, C2:2.5,  calc:true, src:'関包カタログ P.22'},
+  {id:'WS-65',  group:'CAT', name:'スタッド65形',  code:'WS-65',  dim:'65×45×0.8',  size:65,  W:1.15, A:1.42, Ix:10.4,  Iy:4.14, Zx:3.2,  Zy:1.53, ix:2.69, iy:1.7,  C1:1.79, C2:3.25, calc:true, src:'関包カタログ P.22'},
+  {id:'WS-75',  group:'CAT', name:'スタッド75形',  code:'WS-75',  dim:'75×45×0.8',  size:75,  W:1.22, A:1.5,  Ix:14.4,  Iy:4.36, Zx:3.84, Zy:1.55, ix:3.08, iy:1.69, C1:1.7,  C2:3.75, calc:true, src:'関包カタログ P.22'},
+  {id:'WS-90',  group:'CAT', name:'スタッド90形',  code:'WS-90',  dim:'90×45×0.8',  size:90,  W:1.31, A:1.62, Ix:21.8,  Iy:4.63, Zx:4.85, Zy:1.59, ix:3.65, iy:1.68, C1:1.58, C2:4.5,  calc:true, src:'関包カタログ P.22'},
+  {id:'WS-100', group:'CAT', name:'スタッド100形', code:'WS-100', dim:'100×45×0.8', size:100, W:1.38, A:1.7,  Ix:27.8,  Iy:4.8,  Zx:5.56, Zy:1.6,  ix:4.02, iy:1.67, C1:1.51, C2:5,    calc:true, src:'関包カタログ P.22'},
+  {id:'WS-50S',  group:'SANYO', name:'スタッド50形',  code:'WS-50 JIS 三洋',  dim:'50×45×0.8',  size:50,  W:0.972, A:1.238, Ix:5.6,   Iy:3.4,  Zx:2.24, Zy:1.26, ix:2.127, iy:1.657, C1:null, C2:2.5, calc:true, src:'三洋工業 SICS JIS品'},
+  {id:'WS-65S',  group:'SANYO', name:'スタッド65形',  code:'WS-65 JIS 三洋',  dim:'65×45×0.8',  size:65,  W:1.066, A:1.358, Ix:10.06, Iy:3.73, Zx:3.09, Zy:1.31, ix:2.722, iy:1.657, C1:null, C2:3.25, calc:true, src:'三洋工業 SICS JIS品'},
+  {id:'WS-75S',  group:'SANYO', name:'スタッド75形',  code:'WS-75 JIS 三洋',  dim:'75×45×0.8',  size:75,  W:1.129, A:1.438, Ix:13.87, Iy:3.93, Zx:3.7,  Zy:1.34, ix:3.106, iy:1.653, C1:null, C2:3.75, calc:true, src:'三洋工業 SICS JIS品'},
+  {id:'WS-90S',  group:'SANYO', name:'スタッド90形',  code:'WS-90 JIS 三洋',  dim:'90×45×0.8',  size:90,  W:1.223, A:1.558, Ix:20.95, Iy:4.18, Zx:4.65, Zy:1.37, ix:3.667, iy:1.638, C1:null, C2:4.5,  calc:true, src:'三洋工業 SICS JIS品'},
+  {id:'WS-100S', group:'SANYO', name:'スタッド100形', code:'WS-100 JIS 三洋', dim:'100×45×0.8', size:100, W:1.286, A:1.638, Ix:26.63, Iy:4.33, Zx:5.33, Zy:1.38, ix:4.032, iy:1.626, C1:null, C2:5,    calc:true, src:'三洋工業 SICS JIS品'},
+  {id:'P-50×50×1.6', group:'STKR', tube:true, F:2400, name:'角パイプ □-50×50×1.6', code:'STKR400', dim:'50×50×1.6', depth:50, width:50, W:2.38, A:3.032, Ix:11.7, Iy:11.7, Zx:4.68, Zy:4.68, ix:1.96, iy:1.96, C1:null, C2:2.5, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-50×50×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-50×50×2.3', code:'STKR400', dim:'50×50×2.3', depth:50, width:50, W:3.34, A:4.252, Ix:15.9, Iy:15.9, Zx:6.34, Zy:6.34, ix:1.93, iy:1.93, C1:null, C2:2.5, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-60×60×1.6', group:'STKR', tube:true, F:2400, name:'角パイプ □-60×60×1.6', code:'STKR400', dim:'60×60×1.6', depth:60, width:60, W:2.88, A:3.672, Ix:20.7, Iy:20.7, Zx:6.89, Zy:6.89, ix:2.37, iy:2.37, C1:null, C2:3.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-60×60×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-60×60×2.3', code:'STKR400', dim:'60×60×2.3', depth:60, width:60, W:4.06, A:5.172, Ix:28.3, Iy:28.3, Zx:9.44, Zy:9.44, ix:2.34, iy:2.34, C1:null, C2:3.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-75×75×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-75×75×2.3', code:'STKR400', dim:'75×75×2.3', depth:75, width:75, W:5.14, A:6.552, Ix:57.1, Iy:57.1, Zx:15.2, Zy:15.2, ix:2.95, iy:2.95, C1:null, C2:3.75, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-75×75×3.2', group:'STKR', tube:true, F:2400, name:'角パイプ □-75×75×3.2', code:'STKR400', dim:'75×75×3.2', depth:75, width:75, W:7.01, A:8.927, Ix:75.5, Iy:75.5, Zx:20.1, Zy:20.1, ix:2.91, iy:2.91, C1:null, C2:3.75, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-100×100×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-100×100×2.3', code:'STKR400', dim:'100×100×2.3', depth:100, width:100, W:6.95, A:8.852, Ix:140, Iy:140, Zx:27.9, Zy:27.9, ix:3.97, iy:3.97, C1:null, C2:5.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-100×100×3.2', group:'STKR', tube:true, F:2400, name:'角パイプ □-100×100×3.2', code:'STKR400', dim:'100×100×3.2', depth:100, width:100, W:9.52, A:12.13, Ix:187, Iy:187, Zx:37.5, Zy:37.5, ix:3.93, iy:3.93, C1:null, C2:5.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-60×30×1.6', group:'STKR', tube:true, F:2400, name:'角パイプ □-60×30×1.6', code:'STKR400', dim:'60×30×1.6', depth:60, width:30, W:2.13, A:2.712, Ix:12.5, Iy:4.25, Zx:4.16, Zy:2.83, ix:2.15, iy:1.25, C1:null, C2:3.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-60×30×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-60×30×2.3', code:'STKR400', dim:'60×30×2.3', depth:60, width:30, W:2.98, A:3.792, Ix:16.8, Iy:5.65, Zx:5.61, Zy:3.76, ix:2.11, iy:1.22, C1:null, C2:3.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-75×45×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-75×45×2.3', code:'STKR400', dim:'75×45×2.3', depth:75, width:45, W:4.06, A:5.172, Ix:38.9, Iy:17.6, Zx:10.4, Zy:7.82, ix:2.74, iy:1.84, C1:null, C2:3.75, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-75×45×3.2', group:'STKR', tube:true, F:2400, name:'角パイプ □-75×45×3.2', code:'STKR400', dim:'75×45×3.2', depth:75, width:45, W:5.5, A:7.007, Ix:50.8, Iy:22.8, Zx:13.5, Zy:10.1, ix:2.69, iy:1.8, C1:null, C2:3.75, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-100×50×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-100×50×2.3', code:'STKR400', dim:'100×50×2.3', depth:100, width:50, W:5.14, A:6.552, Ix:84.8, Iy:29.0, Zx:17.0, Zy:11.6, ix:3.6, iy:2.1, C1:null, C2:5.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-100×50×3.2', group:'STKR', tube:true, F:2400, name:'角パイプ □-100×50×3.2', code:'STKR400', dim:'100×50×3.2', depth:100, width:50, W:7.01, A:8.927, Ix:112, Iy:38.0, Zx:22.5, Zy:15.2, ix:3.55, iy:2.06, C1:null, C2:5.0, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-125×75×2.3', group:'STKR', tube:true, F:2400, name:'角パイプ □-125×75×2.3', code:'STKR400', dim:'125×75×2.3', depth:125, width:75, W:6.95, A:8.852, Ix:192, Iy:87.5, Zx:30.6, Zy:23.3, ix:4.65, iy:3.14, C1:null, C2:6.25, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'P-125×75×3.2', group:'STKR', tube:true, F:2400, name:'角パイプ □-125×75×3.2', code:'STKR400', dim:'125×75×3.2', depth:125, width:75, W:9.52, A:12.13, Ix:257, Iy:117, Zx:41.1, Zy:31.1, ix:4.6, iy:3.1, C1:null, C2:6.25, calc:true, src:'日鉄建材 角パイプ断面性能表（JIS G 3466 STKR400）'},
+  {id:'RC-45', group:'RC', name:'補強材 RC-45', code:'RC-45', dim:'45×30×10×1.4', size:45, W:1.24, A:1.59, Ix:5.39, Iy:1.91, Zx:2.39, Zy:1.01, ix:1.84, iy:1.09, C1:1.11, C2:2.25, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-50', group:'RC', name:'補強材 RC-50', code:'RC-50', dim:'50×30×10×1.4', size:50, W:1.3, A:1.74, Ix:7.1, Iy:2.26, Zx:2.84, Zy:1.22, ix:2.01, iy:1.14, C1:1.16, C2:2.5, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-60', group:'RC', name:'補強材 RC-60', code:'RC-60', dim:'60×30×10×1.4', size:60, W:1.42, A:1.88, Ix:10.83, Iy:2.42, Zx:3.61, Zy:1.26, ix:2.39, iy:1.13, C1:1.07, C2:3.0, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-65', group:'RC', name:'補強材 RC-65', code:'RC-65', dim:'65×30×10×1.4', size:65, W:1.48, A:1.95, Ix:13.04, Iy:2.48, Zx:4.01, Zy:1.26, ix:2.58, iy:1.12, C1:1.04, C2:3.25, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-75', group:'RC', name:'補強材 RC-75', code:'RC-75', dim:'75×30×10×1.4', size:75, W:1.58, A:2.09, Ix:18.21, Iy:2.61, Zx:4.85, Zy:1.28, ix:2.95, iy:1.11, C1:0.97, C2:3.75, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-90', group:'RC', name:'補強材 RC-90', code:'RC-90', dim:'90×30×10×1.4', size:90, W:1.74, A:2.3, Ix:27.95, Iy:2.76, Zx:6.21, Zy:1.31, ix:3.48, iy:1.09, C1:0.89, C2:4.5, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-100', group:'RC', name:'補強材 RC-100', code:'RC-100', dim:'100×30×10×1.4', size:100, W:1.86, A:2.44, Ix:35.87, Iy:2.85, Zx:7.17, Zy:1.32, ix:3.83, iy:1.08, C1:0.84, C2:5.0, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-75H', group:'RC', name:'補強材 RC-75H', code:'RC-75H', dim:'75×45×15×1.4', size:75, W:2.03, A:2.65, Ix:24.78, Iy:8.03, Zx:6.6, Zy:2.9, ix:3.05, iy:1.74, C1:1.73, C2:3.75, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-100H', group:'RC', name:'補強材 RC-100H', code:'RC-100H', dim:'100×50×20×1.4', size:100, W:2.52, A:3.28, Ix:52.93, Iy:12.76, Zx:10.58, Zy:4.08, ix:4.01, iy:1.97, C1:1.88, C2:5.0, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-60J', group:'RC', name:'補強材 RC-60J', code:'RC-60J', dim:'60×30×10×2.3', size:60, W:2.28, A:2.76, Ix:15.52, Iy:3.37, Zx:5.17, Zy:1.75, ix:2.37, iy:1.1, C1:1.08, C2:3.0, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-65J', group:'RC', name:'補強材 RC-65J', code:'RC-65J', dim:'65×30×10×2.3', size:65, W:2.35, A:2.86, Ix:18.73, Iy:3.47, Zx:5.76, Zy:1.77, ix:2.55, iy:1.1, C1:1.04, C2:3.25, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-75J', group:'RC', name:'補強材 RC-75J', code:'RC-75J', dim:'75×45×15×2.3', size:75, W:3.28, A:3.92, Ix:35.94, Iy:11.48, Zx:9.58, Zy:4.14, ix:3.02, iy:1.71, C1:1.73, C2:3.75, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-90J', group:'RC', name:'補強材 RC-90J', code:'RC-90J', dim:'90×45×15×2.3', size:90, W:3.33, A:4.2, Ix:54.7, Iy:12.1, Zx:12.2, Zy:4.2, ix:3.56, iy:1.68, C1:1.59, C2:4.5, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'RC-100J', group:'RC', name:'補強材 RC-100J', code:'RC-100J', dim:'100×50×20×2.3', size:100, W:4.1, A:4.86, Ix:77.31, Iy:18.36, Zx:15.46, Zy:5.88, ix:3.98, iy:1.94, C1:1.88, C2:5.0, calc:true, src:'関包カタログ P.21 補強材'},
+  {id:'TW-100', group:'TW', name:'タワーウォール P-100TW', code:'P-100TW', dim:'100×45×10×1.0', size:100, W:1.64, A:2.06, Ix:33.47, Iy:5.63, Zx:6.69, Zy:1.81, ix:4.03, iy:1.65, C1:1.4, C2:5, calc:true, src:'オクジュー P-100TW（断面性能は寸法から板厚中心線で算出）'},
+  {id:'TW-125', group:'TW', name:'タワーウォール P-125TW', code:'P-125TW', dim:'125×45×10×0.8', size:125, W:1.48, A:1.854, Ix:45.1, Iy:4.9, Zx:7.22, Zy:1.51, ix:4.93, iy:1.62, C1:1.25, C2:6.25, calc:true, src:'オクジュー P-125TW（断面性能は寸法から板厚中心線で算出）'}
+];
+// 桐井製作所：鋼製下地カタログ 2026.7「断面性能一覧」（2024年7月改訂）の値。WS は JIS A 6517、LG は JIS G 3350（一般構造用軽量形鋼）
+STUDS.push(
+  {id:'K-WS50', group:'KIRII', maker:'桐井製作所', name:'スタッド50形', code:'WS-50 桐井', dim:'50×45×0.8', size:50, W:1.034, A:1.28, Ix:5.637, Iy:3.729, Zx:2.254, Zy:1.441, ix:2.1, iy:1.71, C1:null, C2:2.5, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-WS65', group:'KIRII', maker:'桐井製作所', name:'スタッド65形', code:'WS-65 桐井', dim:'65×45×0.8', size:65, W:1.131, A:1.4, Ix:10.19, Iy:4.114, Zx:3.135, Zy:1.497, ix:2.7, iy:1.71, C1:null, C2:3.25, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-WS75', group:'KIRII', maker:'桐井製作所', name:'スタッド75形', code:'WS-75 桐井', dim:'75×45×0.8', size:75, W:1.196, A:1.48, Ix:14.09, Iy:4.336, Zx:3.757, Zy:1.526, ix:3.09, iy:1.71, C1:null, C2:3.75, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-WS90', group:'KIRII', maker:'桐井製作所', name:'スタッド90形', code:'WS-90 桐井', dim:'90×45×0.8', size:90, W:1.293, A:1.6, Ix:21.35, Iy:4.627, Zx:4.744, Zy:1.562, ix:3.65, iy:1.7, C1:null, C2:4.5, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-WS100', group:'KIRII', maker:'桐井製作所', name:'スタッド100形', code:'WS-100 桐井', dim:'100×45×0.8', size:100, W:1.357, A:1.68, Ix:27.18, Iy:4.798, Zx:5.436, Zy:1.581, ix:4.02, iy:1.69, C1:null, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQ4565', group:'KIRII', maker:'桐井製作所', name:'SQ-BAR4565', code:'SQ-BAR4565', dim:'□65×45×0.45', size:65, W:0.833, A:1.025, Ix:5.949, Iy:3.728, Zx:1.83, Zy:1.56, ix:2.41, iy:1.91, C1:null, C2:3.25, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQ4575', group:'KIRII', maker:'桐井製作所', name:'SQ-BAR4575', code:'SQ-BAR4575', dim:'□75×45×0.45', size:75, W:0.903, A:1.111, Ix:8.359, Iy:4.156, Zx:2.229, Zy:1.747, ix:2.74, iy:1.93, C1:null, C2:3.75, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQ4590', group:'KIRII', maker:'桐井製作所', name:'SQ-BAR4590', code:'SQ-BAR4590', dim:'□90×45×0.45', size:90, W:1.009, A:1.24, Ix:12.96, Iy:4.799, Zx:2.88, Zy:2.029, ix:3.23, iy:1.97, C1:null, C2:4.5, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQ45100', group:'KIRII', maker:'桐井製作所', name:'SQ-BAR45100', code:'SQ-BAR45100', dim:'□100×45×0.45', size:100, W:1.09, A:1.34, Ix:16.94, Iy:5.294, Zx:3.387, Zy:2.247, ix:3.56, iy:1.99, C1:null, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQP100-10', group:'KIRII', maker:'桐井製作所', name:'SQ-PowerBar45100(1.0)', code:'SQ-PowerBar(1.0)', dim:'□100×45×1.0', size:100, W:2.259, A:2.834, Ix:37.1, Iy:10.87, Zx:7.42, Zy:4.831, ix:3.62, iy:1.96, C1:null, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-SQP100-12', group:'KIRII', maker:'桐井製作所', name:'SQ-PowerBar45100(1.2)', code:'SQ-PowerBar(1.2)', dim:'□100×45×1.2', size:100, W:2.715, A:3.393, Ix:44.23, Iy:12.91, Zx:8.846, Zy:5.737, ix:3.61, iy:1.95, C1:null, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG60-16', group:'RC', maker:'桐井製作所', name:'補強材 LG-60×30×10×1.6', code:'LG-60×1.6', dim:'60×30×10×1.6', size:60, W:1.65, A:2.071, Ix:11.63, Iy:2.556, Zx:3.876, Zy:1.318, ix:2.37, iy:1.11, C1:1.06, C2:3.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG60-23', group:'RC', maker:'桐井製作所', name:'補強材 LG-60×30×10×2.3', code:'LG-60×2.3', dim:'60×30×10×2.3', size:60, W:2.278, A:2.872, Ix:15.59, Iy:3.312, Zx:5.196, Zy:1.704, ix:2.33, iy:1.07, C1:1.06, C2:3.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG75-16', group:'RC', maker:'桐井製作所', name:'補強材 LG-75×45×15×1.6', code:'LG-75×1.6', dim:'75×45×15×1.6', size:75, W:2.351, A:2.951, Ix:27.14, Iy:8.71, Zx:7.237, Zy:3.133, ix:3.03, iy:1.72, C1:1.72, C2:3.75, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG75-23', group:'RC', maker:'桐井製作所', name:'補強材 LG-75×45×15×2.3', code:'LG-75×2.3', dim:'75×45×15×2.3', size:75, W:3.281, A:4.137, Ix:37.11, Iy:11.7, Zx:9.896, Zy:4.202, ix:3.0, iy:1.68, C1:1.72, C2:3.75, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG100-16', group:'RC', maker:'桐井製作所', name:'補強材 LG-100×50×20×1.6', code:'LG-100×1.6', dim:'100×50×20×1.6', size:100, W:2.924, A:3.671, Ix:58.41, Iy:13.98, Zx:11.68, Zy:4.462, ix:3.99, iy:1.95, C1:1.87, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'},
+  {id:'K-LG100-23', group:'RC', maker:'桐井製作所', name:'補強材 LG-100×50×20×2.3', code:'LG-100×2.3', dim:'100×50×20×2.3', size:100, W:4.101, A:5.172, Ix:80.69, Iy:19.0, Zx:16.13, Zy:6.058, ix:3.95, iy:1.92, C1:1.86, C2:5.0, calc:true, src:'桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧 P.89–90（2024年7月改訂）'}
+);
+// 長方形の角パイプは 90°回して短辺を壁厚方向に向けた使い方も候補にする（薄い壁用）
+STUDS.filter(s => s.tube && s.depth !== s.width).forEach(s => {
+  const d = s.dim.split('×');
+  STUDS.push(Object.assign({}, s, {id: s.id + 'R', rot: true, dim: `${d[1]}×${d[0]}×${d[2]}`, name: `角パイプ □-${d[1]}×${d[0]}×${d[2]}`,
+    depth: s.width, width: s.depth, Ix: s.Iy, Iy: s.Ix, Zx: s.Zy, Zy: s.Zx, ix: s.iy, iy: s.ix, C2: s.width / 20}));
+});
+const MAKER_OF = {JIS:'関包スチール', CAT:'関包スチール', RC:'関包スチール', SANYO:'三洋工業', TW:'オクジュー', KIRII:'桐井製作所', STKR:'角パイプ（STKR400）'};
+STUDS.forEach(s => { if (!s.maker) s.maker = MAKER_OF[s.group] || ''; });
+
+// 登録データ（データ登録タブ・db）を部材一覧に反映
+function applyUserStuds(rows){
+  for (let i = STUDS.length - 1; i >= 0; i--) if (STUDS[i].group === 'USER') STUDS.splice(i, 1);
+  (rows || []).forEach(r => {
+    const n = k => Number(r[k]);
+    if (!(n('A') > 0 && n('Ix') > 0 && n('Zx') > 0 && n('ix') > 0 && n('iy') > 0 && n('size') > 0)) return;
+    STUDS.push({id:'U-' + r.id, group:'USER', maker: String(r.maker || 'その他').slice(0, 40), name: String(r.name || '登録部材').slice(0, 60), code: String(r.code || r.name || '').slice(0, 40),
+      dim: String(r.dim || '').slice(0, 40), size:n('size'), W: n('W') || null, A:n('A'), Ix:n('Ix'), Iy: n('Iy') || null, Zx:n('Zx'), Zy: n('Zy') || null, ix:n('ix'), iy:n('iy'),
+      C1:null, C2: n('size') / 20, calc:true, src: '登録データ：' + String(r.src || '出典未記入').slice(0, 200), kind: r.kind || 'stud'});
+  });
+}
+
+/* 面重量 kg/m2。cat:吉野石膏カタログ(P.5)代表値、kanpo:関包計算書で使われた値、size:'910'|'606'(幅mm) */
+const BOARDS = [
+  {id:'GB-R 9.5mm',             cat:6.6,  kanpo:7.2,  size:'910', ok:true},
+  {id:'GB-R 12.5mm',            cat:8.5,  kanpo:9.4,  size:'910', ok:true},
+  {id:'GB-NC(不燃) 9.5mm',      cat:7,    kanpo:null, size:'910', ok:false},
+  {id:'GB-S 9.5mm',             cat:6.8,  kanpo:null, size:'910', ok:false},
+  {id:'GB-S 12.5mm',            cat:8.9,  kanpo:null, size:'910', ok:false},
+  {id:'GB-S(不燃) 12.5mm',      cat:9.3,  kanpo:null, size:'910', ok:false},
+  {id:'GB-F 12.5mm',            cat:9.8,  kanpo:null, size:'910', ok:true},
+  {id:'GB-F 15mm',              cat:11.7, kanpo:null, size:'910', ok:true},
+  {id:'GB-F 21mm',              cat:16.4, kanpo:16.8, size:'606', ok:true},
+  {id:'GB-R-H(スーパー) 9.5mm',  cat:11.6, kanpo:11.4, size:'910', ok:true},
+  {id:'GB-R-H(スーパー) 12.5mm', cat:15.2, kanpo:null, size:'910', ok:false},
+  {id:'GB-R-H(ハイパー) 9.5mm',  cat:9.7,  kanpo:null, size:'910', ok:true},
+  {id:'GB-R-H(ハイパー) 12.5mm', cat:12.7, kanpo:null, size:'910', ok:false},
+  {id:'タイガーグラスロック 8mm', cat:6.7,  kanpo:null, size:'910', ok:true}
+];
+
+/* 壁高さの目安 [m]（吉野石膏カタログ P.50）。null は該当なし */
+const GUIDE_ROWS = [
+  {name:'JASS26：共通間柱 @455・振れ止め有',        max:{65:4.0, 75:4.0, 90:4.5, 100:5.0}},
+  {name:'A-2000・WⅠ／WⅠ-60／スーパーウォールA-T（千鳥）', max:{65:3.5, 75:3.9, 90:4.4, 100:null}},
+  {name:'A-2000・WⅡ／スーパーウォールA・WⅡ',        max:{65:3.5, 75:3.9, 90:4.4, 100:4.5}},
+  {name:'S12・WⅠ／S12-T／ハイパーウォールZ・WⅠ／Z-T', max:{65:3.3, 75:3.7, 90:4.2, 100:null}}
+];
+
+
+/* 吉野石膏 耐火遮音システム（2026年5月版 P.3–4 ラインナップ、各ページの下地構造）
+   arr: 千鳥＝スタッド@303（片側606）で各スタッドは片面のみ支持／共通＝両面を支持／共通×2＝2列、各列は片面を支持／片側＝片面壁
+   up/dn: 上張・下張（1面あたり）、cav: 中空部の吸音材 */
+const CAVITY = {GW:{label:'グラスウール 24kg/m³・50mm', w:1.2}, AQ:{label:'アクリア 14kg/m³・50mm', w:0.7}, NONE:null};
+const B = {TSH:'GB-R-H(スーパー) 9.5mm', THHC:'GB-R-H(ハイパー) 9.5mm', Z21:'GB-F 21mm', Z15:'GB-F 15mm', Z125:'GB-F 12.5mm', TGR:'タイガーグラスロック 8mm'};
+const WALLS = [
+  // A-2000・WⅠシリーズ／スーパーウォールA（遮音）
+  {id:'A2000-W1',    s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ',                     tld:56, t:136, kg:62, arr:'千鳥', up:'TSH', dn:'Z21', cav:'GW',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.7'},
+  {id:'A2000-W1-AQ', s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ アクリア仕様',           tld:56, t:136, kg:62, arr:'千鳥', up:'TSH', dn:'Z21', cav:'AQ',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.8'},
+  {id:'A2000-W1-S',  s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ-S（生活音対策）',        tld:57, t:137, kg:63, arr:'千鳥', up:'TSH', dn:'Z21', cav:'GW',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.8'},
+  {id:'A2000-W1-MS', s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ 目透かし仕様',           tld:56, t:136, kg:62, arr:'千鳥', up:'TSH', dn:'Z21', cav:'GW',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.8'},
+  {id:'A2000-SK',    s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ 敷目板タイプ',           tld:55, t:151, kg:64, arr:'共通', pitch:30.3, up:'TSH', dn:'Z21', cav:'GW', shiki:true, cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.9'},
+  {id:'A2000-SK-AQ', s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ 敷目板タイプ アクリア仕様', tld:55, t:151, kg:63, arr:'共通', pitch:30.3, up:'TSH', dn:'Z21', cav:'AQ', shiki:true, cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.10'},
+  {id:'A2000-60',    s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ-60',                   tld:61, t:161, kg:64, arr:'千鳥', up:'TSH', dn:'Z21', cav:'GW',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.11'},
+  {id:'A2000-W2',    s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅡ',                     tld:61, t:200, kg:64, arr:'共通×2', up:'TSH', dn:'Z21', cav:'GW', cert:'FP060NP-0473-1(2)／SOI-0261', p:'P.12'},
+  {id:'SWA-W2',      s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'スーパーウォールA・WⅡ',             tld:54, t:200, kg:62, arr:'共通×2', up:'TSH', dn:'Z21', cav:'NONE', cert:'FP060NP-0473-1(1)／SOI-0261', p:'P.12'},
+  {id:'SWA-T',       s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'スーパーウォールA-T',               tld:51, t:136, kg:61, arr:'千鳥', up:'TSH', dn:'Z21', cav:'NONE', cert:'FP060NP-0473-1(1)／SOI-0260', p:'P.13'},
+  // S12シリーズ（遮音）
+  {id:'S12-W1',      s:'S12シリーズ（遮音）', name:'S12・WⅠ',                    tld:51, t:125, kg:45, arr:'千鳥', up:'Z125', dn:'Z125', cav:'GW', cert:'FP060NP-0483(2)／SOI-0173-1', p:'P.17'},
+  {id:'S12-W1-AQ',   s:'S12シリーズ（遮音）', name:'S12・WⅠ アクリア仕様',          tld:51, t:125, kg:45, arr:'千鳥', up:'Z125', dn:'Z125', cav:'AQ', cert:'FP060NP-0483(2)／SOI-0173-1', p:'P.18'},
+  {id:'S12-W1-S',    s:'S12シリーズ（遮音）', name:'S12・WⅠ-S（生活音対策）',       tld:53, t:126, kg:46, arr:'千鳥', up:'Z125', dn:'Z125', cav:'GW', cert:'FP060NP-0483(2)／SOI-0173-1', p:'P.18'},
+  {id:'S12-SK',      s:'S12シリーズ（遮音）', name:'S12・WⅠ 敷目板タイプ',          tld:50, t:140, kg:47, arr:'共通', pitch:30.3, up:'Z125', dn:'Z125', cav:'GW', shiki:true, cert:'FP060NP-0483(2)／SOI-0173-1', p:'P.19'},
+  {id:'S12-T',       s:'S12シリーズ（遮音）', name:'S12-T',                       tld:44, t:125, kg:44, arr:'千鳥', up:'Z125', dn:'Z125', cav:'NONE', cert:'FP060NP-0483(1)／SOI-0173-1', p:'P.21'},
+  // ハイパーウォールZシリーズ（遮音）
+  {id:'HWZ-W1',      s:'ハイパーウォールZシリーズ（遮音）', name:'ハイパーウォールZ・WⅠ',            tld:52, t:119, kg:45, arr:'千鳥', up:'THHC', dn:'Z125', cav:'GW', cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.23'},
+  {id:'HWZ-W1-AQ',   s:'ハイパーウォールZシリーズ（遮音）', name:'ハイパーウォールZ・WⅠ アクリア仕様',  tld:52, t:119, kg:45, arr:'千鳥', up:'THHC', dn:'Z125', cav:'AQ', cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.24'},
+  {id:'HWZ-W1-S',    s:'ハイパーウォールZシリーズ（遮音）', name:'ハイパーウォールZ・WⅠ-S（生活音対策）', tld:54, t:120, kg:46, arr:'千鳥', up:'THHC', dn:'Z125', cav:'GW', cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.24'},
+  {id:'HWZ-SK',      s:'ハイパーウォールZシリーズ（遮音）', name:'ハイパーウォールZ・WⅠ 敷目板タイプ',  tld:52, t:134, kg:47, arr:'共通', pitch:30.3, up:'THHC', dn:'Z125', cav:'GW', shiki:true, cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.25'},
+  {id:'HWZ-T',       s:'ハイパーウォールZシリーズ（遮音）', name:'ハイパーウォールZ-T',              tld:44, t:119, kg:44, arr:'千鳥', up:'THHC', dn:'Z125', cav:'NONE', cert:'FP060NP-0473-1(1)／SOI-0260', p:'P.27'},
+  // 耐火システム
+  {id:'SW-ONE',      s:'耐火：Sウォールシリーズ（片面壁）', name:'Sウォールワン',  tld:null, t:107, kg:37, arr:'片側', pitch:45.5, up:'Z21', dn:'Z21', cav:'NONE', cert:'FP060NP-0497', p:'P.33'},
+  {id:'SW-90',       s:'耐火：Sウォールシリーズ（片面壁）', name:'Sウォール・90',  tld:null, t:132, kg:37, arr:'片側', pitch:45.5, stud:90, up:'Z21', dn:'Z21', cav:'NONE', cert:'FP060NP-0516', p:'P.35'},
+  {id:'F-S12',       s:'耐火：両面壁', name:'S12（耐火）',              tld:null, t:115, kg:43, arr:'共通', pitch:45.5, up:'Z125', dn:'Z125', cav:'NONE', cert:'FP060NP-0483(1)', p:'P.38'},
+  {id:'F-HWZ',       s:'耐火：両面壁', name:'ハイパーウォールZ（耐火）',  tld:null, t:109, kg:43, arr:'共通', pitch:45.5, up:'THHC', dn:'Z125', cav:'NONE', cert:'FP060NP-0473-1(1)', p:'P.39'},
+  {id:'F-SWA',       s:'耐火：両面壁', name:'スーパーウォールA（耐火）',  tld:null, t:126, kg:60, arr:'共通', pitch:45.5, up:'TSH', dn:'Z21', cav:'NONE', cert:'FP060NP-0473-1(1)', p:'P.40'},
+  {id:'F-B15',       s:'耐火：両面壁', name:'B15',                     tld:null, t:125, kg:51, arr:'共通', pitch:45.5, up:'Z15', dn:'Z15', cav:'NONE', cert:'FP060NP-0483(1)', p:'P.41'},
+  {id:'F-GR1',       s:'耐火：両面壁', name:'GR-1',                    tld:null, t:106, kg:37, arr:'共通', pitch:45.5, up:'TGR', dn:'Z125', cav:'NONE', cert:'FP060NP-0509(1)', p:'P.42'}
+];
+const SHIKIME_W = 2.0;   // 敷目板（タイガーボード12.5mm 帯板）。カタログ壁体重量の差（敷目板タイプ − 標準 ≒ 2kg/m²）から設定
+
+// 壁種から「1本のスタッドが支える材料」とピッチ等を作る
+// 壁全体の面材厚（両面。片側壁は片面）。カタログのボード構成から
+function presetBoardT(w){
+  const t = id => parseFloat(/([\d.]+)mm/.exec(B[id])[1]);
+  return (t(w.dn) + t(w.up)) * (w.arr === '片側' ? 1 : 2);
+}
+function wallPreset(id){
+  const w = WALLS.find(x => x.id === id);
+  if (!w) return null;
+  const faces = (w.arr === '共通') ? 2 : 1;          // 共通配置だけが両面を支える
+  const layers = [{id:B[w.dn], n:faces, custom:''}, {id:B[w.up], n:faces, custom:''}];
+  const cav = CAVITY[w.cav];
+  if (cav) layers.push({id:CUSTOM_ID, n:1, custom:String(cav.w), note:cav.label});
+  if (w.shiki) layers.push({id:CUSTOM_ID, n:1, custom:String(SHIKIME_W), note:'敷目板（推定）'});
+  const pitch = w.pitch || 60.6;                       // 千鳥@303（片側606）・共通×2 @606
+  return {
+    wall:w,
+    patch:{
+      wallType:w.id, layers, a:pitch,
+      bracing: w.arr === '千鳥' ? '無' : '有', axis:'auto', Lb:120,
+      W2mode:'auto'
+    }
+  };
+}
+
+/* 増し貼り・仕上げ（壁種の表層に追加）
+   ケイ酸カルシウム板（JIS A 5430 タイプ2）：面重量 = 公称かさ密度(g/cm³) × 厚さ(mm) kg/m² */
+const CALSIL = [];
+[['0.8FK', 0.8], ['1.0FK', 1.0]].forEach(([g, d]) => [5, 6, 8, 10, 12].forEach(t => CALSIL.push({id:`ケイカル板 ${g} ${t}mm`, w: Math.round(d * t * 10) / 10})));
+function overlayUnit(item, basis){
+  if (item.opt === 'KG') return {unit: num(item.kg), label: item.note ? `${item.note}（kg/m² 入力）` : '石・タイル等（kg/m² 入力）', perSheet:false};
+  if (item.opt && item.opt.startsWith('C:')) { const c = CALSIL.find(x => x.id === item.opt.slice(2)); return c ? {unit:c.w, label:c.id, perSheet:true} : null; }
+  if (item.opt && item.opt.startsWith('B:')) { const b = boardById(item.opt.slice(2)); return b ? {unit: boardWeight(b, basis), label:b.id, perSheet:true} : null; }
+  return null;
+}
+// 1本のスタッドが支える増し貼り重量。共通配置（または壁種未選択）は両面の合計、千鳥・ダブル・片側壁は重い方の片面
+function overlayWeight(inp){
+  const list = Array.isArray(inp.over) ? inp.over : [];
+  const errors = [], items = [];
+  let A = 0, Bf = 0;
+  list.forEach((it, i) => {
+    const u = overlayUnit(it, inp.basis);
+    if (!u) { errors.push({field:'over', msg:`増し貼り${i + 1}の種類を選んでください`}); return; }
+    const n = u.perSheet ? num(it.n) : 1;
+    if (u.perSheet && !(n >= 1 && Number.isInteger(n))) { errors.push({field:'over', msg:`増し貼り${i + 1}の枚数は1以上の整数で入力してください`}); return; }
+    if (!(u.unit >= 0)) { errors.push({field:'over', msg:`増し貼り${i + 1}の重さ（kg/m²）を 0 以上で入力してください`}); return; }
+    const sub = u.unit * n, face = it.face === 'B' ? 'B' : it.face === 'both' ? 'both' : 'A';
+    if (face !== 'B') A += sub;
+    if (face !== 'A') Bf += sub;
+    items.push({label:u.label, unit:u.unit, n, sub, face, perSheet:u.perSheet});
+  });
+  const w = typeof WALLS !== 'undefined' ? WALLS.find(x => x.id === inp.wallType) : null;
+  const split = !!(w && w.arr !== '共通');
+  return {A, B:Bf, per: split ? Math.max(A, Bf) : A + Bf, split, items, errors};
+}
+
+// 下地材重量の自動算定：関包計算書の @303 → 5 kg/m²（千鳥@606 → 2.5）をピッチで按分
+const W2_BASE = 5, W2_BASE_PITCH = 30.3;
+// 角パイプは 自重(kg/m) ÷ ピッチ(m) ＋ 受け材等 1.0 kg/m²
+function autoW2(a, stud){
+  if (!(a > 0)) return NaN;
+  if (stud && stud.tube) return Math.round((stud.W / (a / 100) + 1) * 100) / 100;
+  return Math.round(W2_BASE * W2_BASE_PITCH / a * 100) / 100;
+}
+
+const DEFAULTS = {
+  mode:'wall', wallType:'', date:'', company:'', maker:'', over:[],
+  studId:'WS-65J', bracing:'有', axis:'auto',
+  a:30.3, L:500, Lb:120, layers:[{id:'GB-R 12.5mm', n:2, custom:''}], basis:'cat', W2:5, W2mode:'auto',
+  k:1, ch:210, Lc:270, Wc:12.2, kh:0.6, kv:0,
+  fb:2100, E:2100000, F:2100, fcManual:'', deflDen:200
+};
+
+function num(v){
+  if (typeof v === 'number') return Number.isFinite(v) ? v : NaN;
+  const s = String(v == null ? '' : v).trim().replace(/,/g, '');
+  if (s === '') return NaN;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function boardById(id){ return BOARDS.find(b => b.id === id); }
+function boardWeight(b, basis){ return (basis === 'kanpo' && b.kanpo != null) ? b.kanpo : b.cat; }
+function sheetAreaM2(b){ return (b.size === '606' ? 0.606 : 0.91) * 1.82; }
+
+function layersWeight(layers, basis){
+  const items = [], errors = [], fallback = [];
+  let total = 0;
+  if (!Array.isArray(layers) || layers.length === 0) {
+    errors.push({field:'layers', msg:'仕上材を1つ以上選んでください'});
+    return {W1:0, items, errors, fallback};
+  }
+  layers.forEach((l, idx) => {
+    const n = num(l.n);
+    if (!(n >= 1 && Number.isInteger(n))) { errors.push({field:'layers', msg:`面材${idx + 1}の枚数は1以上の整数で入力してください`}); return; }
+    let unit, label;
+    if (l.id === CUSTOM_ID) {
+      unit = num(l.custom); label = l.note || 'その他（手入力）';
+      if (!(unit >= 0)) { errors.push({field:'layers', msg:`面材${idx + 1}（その他）の重量を 0 以上で入力してください`}); return; }
+    } else {
+      const b = boardById(l.id);
+      if (!b) { errors.push({field:'layers', msg:`面材${idx + 1}を選んでください`}); return; }
+      unit = boardWeight(b, basis); label = b.id;
+      if (basis === 'kanpo' && b.kanpo == null) fallback.push(b.id);
+    }
+    items.push({label, unit, n, sub: unit * n});
+    total += unit * n;
+  });
+  return {W1:total, items, errors, fallback};
+}
+
+// 細長比。フレドメ有（自動）は 強軸 L/ix と 弱軸 Lb/iy（Lb=フレドメ間隔）の大きい方、無は 弱軸 L/iy
+function resolveAxis(stud, bracing, axis, H, Lb){
+  const auto = !(axis === 'x' || axis === 'y');
+  const cand = [];
+  if (!auto) cand.push({axis, i: axis === 'x' ? stud.ix : stud.iy, len: H});
+  else if (bracing === '無') cand.push({axis:'y', i: stud.iy, len: H});
+  else {
+    cand.push({axis:'x', i: stud.ix, len: H});
+    if (Lb > 0 && Lb < H) cand.push({axis:'y', i: stud.iy, len: Lb, byLb:true});
+  }
+  cand.forEach(c => { c.lambda = c.len / c.i; c.name = c.axis === 'x' ? '強軸 ix' : '弱軸 iy'; });
+  const g = cand.reduce((m, c) => (c.lambda > m.lambda ? c : m), cand[0]);
+  return Object.assign({}, g, {auto, cand});
+}
+
+// 長期許容圧縮応力度 fc（軽量形鋼の座屈式）。Λ = π√(E/0.6F)、λ>Λ で 0.277F/(λ/Λ)²
+function allowCompression(lambda, F, E){
+  const Lam = PI_CALC * Math.sqrt(E / (0.6 * F));
+  const r = lambda / Lam;
+  if (r <= 1) {
+    const nu = 1.5 + (2 / 3) * r * r;
+    return {fc:(1 - 0.4 * r * r) * F / nu, Lam, r, zone:'short'};
+  }
+  return {fc:0.277 * F / (r * r), Lam, r, zone:'slender'};
+}
+
+function prepare(inp){
+  const errors = [];
+  const stud = STUDS.find(s => s.id === inp.studId && s.calc);
+  const a = num(inp.a), H = num(inp.L), W2 = inp.W2mode === 'auto' ? autoW2(a, stud) : num(inp.W2);
+  const E = num(inp.E), Lb = num(inp.Lb);
+  // 角パイプ（STKR400）は告示の基準強度 F = 235 N/mm² ≒ 2400 kg/cm²、閉断面のため fb = F
+  const F = stud && stud.F ? stud.F : num(inp.F), fb = stud && stud.F ? stud.F : num(inp.fb);
+  const fcManual = (inp.fcManual === '' || inp.fcManual == null) ? null : num(inp.fcManual);
+  let den = num(inp.deflDen); if (!(den > 0)) den = 200;
+  if (!stud) errors.push({field:'stud', msg:'検討部材を選んでください'});
+  if (!(a > 0)) errors.push({field:'a', msg:'スタッドピッチ a を 0 より大きい値で入力してください'});
+  if (!(H > 0)) errors.push({field:'L', msg:'壁高を 0 より大きい値で入力してください'});
+  if (!(W2 >= 0)) errors.push({field:'W2', msg:'下地材重量 W2 を 0 以上で入力してください'});
+  if (inp.bracing !== '無' && !(inp.axis === 'x' || inp.axis === 'y') && !(Lb > 0)) errors.push({field:'Lb', msg:'フレドメ間隔 Lb を 0 より大きい値で入力してください'});
+  if (!(fb > 0)) errors.push({field:'fb', msg:'fb を 0 より大きい値で入力してください'});
+  if (!(E > 0)) errors.push({field:'E', msg:'E を 0 より大きい値で入力してください'});
+  if (!(F > 0)) errors.push({field:'F', msg:'F を 0 より大きい値で入力してください'});
+  if (fcManual !== null && !(fcManual > 0)) errors.push({field:'fcManual', msg:'fc の手入力は 0 より大きい値にするか、空欄にしてください'});
+  const lw = layersWeight(inp.layers, inp.basis);
+  lw.errors.forEach(e => errors.push(e));
+  const ov = overlayWeight(inp);
+  ov.errors.forEach(e => errors.push(e));
+  lw.base = lw.W1; lw.W1 = lw.W1 + ov.per; lw.ov = ov;
+  return {errors, stud, a, H, W2, fb, E, F, Lb, fcManual, den, lw};
+}
+
+function longTermFc(p, lambda){
+  const auto = allowCompression(lambda, p.F, p.E);
+  return {auto, fcl: p.fcManual !== null ? p.fcManual : auto.fc, manual: p.fcManual !== null};
+}
+
+function calc(inp){
+  const p = prepare(inp);
+  const mode = inp.mode === 'ceiling' ? 'ceiling' : 'wall';
+  const extra = [];
+  let k, ch, Lc, Wc, kh, kv;
+  if (mode === 'wall') {
+    k = num(inp.k);
+    if (!(k > 0)) extra.push({field:'k', msg:'設計震度 k を 0 より大きい値で入力してください'});
+  } else {
+    ch = num(inp.ch); Lc = num(inp.Lc); Wc = num(inp.Wc); kh = num(inp.kh); kv = num(inp.kv);
+    if (!(ch > 0 && ch < p.H)) extra.push({field:'ch', msg:'天井面の高さ ch は 0 より大きく壁高より小さい値にしてください'});
+    if (!(Lc > 0)) extra.push({field:'Lc', msg:'天井長さ L を 0 より大きい値で入力してください'});
+    if (!(Wc >= 0)) extra.push({field:'Wc', msg:'天井重量 Wc を 0 以上で入力してください'});
+    if (!(kh > 0)) extra.push({field:'kh', msg:'水平震度 kh を 0 より大きい値で入力してください'});
+    if (!(kv >= 0)) extra.push({field:'kv', msg:'鉛直震度 kv を 0 以上で入力してください'});
+  }
+  const errors = p.errors.concat(extra);
+  if (errors.length) return {ok:false, errors};
+
+  const {stud, a, H, W2, fb, E, F, den, lw} = p;
+  const ax = resolveAxis(stud, inp.bracing, inp.axis, H, p.Lb);
+  const W1 = lw.W1, W = W1 + W2, w = W / 10000;
+  const lambda = ax.lambda;
+  const lambdaOk = lambda <= LIMIT_LAMBDA;
+  const lt = longTermFc(p, lambda);
+  const fi = fitInfo(inp, stud);
+  const depth = studDepth(stud);
+  const fitOk = null;
+  const lenMax = maxLen(stud), lenOk = H <= lenMax;
+  const base = {ok:true, mode, stud, ax, lenMax, lenOk, fit: Object.assign({depth, ok: fitOk}, fi), a, H, W1, W2, W2auto: inp.W2mode === 'auto', matF: !!stud.F, W, w, lw, fb, E, F, den, lambda, lambdaOk,
+                fcAuto: lt.auto, fcl: lt.fcl, fcIsManual: lt.manual, basis: inp.basis};
+
+  if (mode === 'wall') {
+    const Pa = lt.fcl * stud.A;
+    const P = w * H * a;
+    const ratio1 = P / Pa;
+    const M = k * w * a * H * H / 8;
+    const bend = M / stud.Zx / fb, axial = P / Pa / 1.5;
+    const combined = bend + axial;
+    const wd = k * w * a;
+    const delta = 5 * wd * Math.pow(H, 4) / (384 * E * stud.Ix);
+    const deflRatio = delta > 0 ? H / delta : Infinity;
+    return Object.assign(base, {k, Pa, P, ratio1, ok1: ratio1 <= 1, M, bend, axial, combined, ok2: combined <= 1,
+      wd, delta, deflRatio, deflOk: deflRatio >= den, overall: lambdaOk && ratio1 <= 1 && combined <= 1 && lenOk});
+  }
+
+  // 天井を受ける壁（地震時に天井から慣性力を受ける）
+  const ah = H - ch, wc = Wc / 10000;
+  const fcs = 1.5 * lt.fcl;
+  const Nl = w * a * H + wc * a * Lc / 2;
+  const sigCl = Nl / stud.A;
+  const ratioL = sigCl / lt.fcl;
+  const wh = w * a * kh;
+  const P = wc * Lc * a * kh;
+  const N = Nl * (kv + 1);
+  const sigC = N / stud.A;
+  const M1 = wh * H * H / 8;
+  const M2 = P * ah * ch / H;
+  const M = M1 + M2;
+  const sigB = M / stud.Zx;
+  const ratioS = sigC / fcs + sigB / fb;
+  const d1 = 5 * wh * Math.pow(H, 4) / (384 * E * stud.Ix);
+  // 集中荷重の最大たわみ δ = P・b・{(H²−b²)/3}^1.5 / (3EIH)、b は荷重点から近い方の支点までの距離
+  // （関包計算書は b = ch 固定。ch > H/2 では過小評価になるため b = min(ch, ah) とする）
+  const bP = Math.min(ch, ah);
+  const d2 = P * bP * Math.sqrt(Math.pow((H * H - bP * bP) / 3, 3)) / (3 * E * stud.Ix * H);
+  const d2Kanpo = P * ch * Math.sqrt(Math.pow((ah * ah + 2 * ah * ch) / 3, 3)) / (3 * E * stud.Ix * H);
+  const delta = d1 + d2;
+  const deflRatio = delta > 0 ? H / delta : Infinity;
+  return Object.assign(base, {ch, Lc, Wc, kh, kv, ah, wc, fcs, Nl, sigCl, ratioL, okL: ratioL <= 1,
+    wh, P, N, sigC, M1, M2, M, sigB, ratioS, okS: ratioS <= 1, d1, d2, bP, d2Kanpo, deltaKanpo: d1 + d2Kanpo, delta, deflRatio, deflOk: deflRatio >= den,
+    overall: lambdaOk && ratioL <= 1 && ratioS <= 1 && lenOk});
+}
+
+// NG のときの対策案。各案は実際に再計算して OK になるものだけを示す
+const ALT_PITCHES = [60.6, 45.5, 30.3, 22.75, 20, 18.2, 15.15];
+const sgc = n => String(Number(Number(n).toPrecision(4)));
+// 納まり：部材の幅（壁厚方向）≦ 壁厚 − 面材厚
+function studDepth(s){ return s ? (s.tube ? s.depth : s.size) : NaN; }
+function boardThickness(layers){
+  let t = 0;
+  (layers || []).forEach(l => { if (l.id === CUSTOM_ID) return; const m = /([\d.]+)mm/.exec(l.id); const n = num(l.n); if (m && n > 0) t += parseFloat(m[1]) * n; });
+  return Math.round(t * 10) / 10;
+}
+function fitInfo(inp, stud){ const depth = studDepth(stud); return {depth, limit: depth}; }
+/* 角パイプ門型：縦材（柱）を間隔 S で建て、横材（胴縁）を n 段入れ、その間をスタッドで受ける。
+   横材：スパン S の単純梁。面外 q = k・Wwall・(H/(n+1))、鉛直 qv = Wwall・(上部スタッド分)
+   縦材：スパン H の単純梁に、横材の反力 P = q・S が n 点（等間隔）に作用 */
+// 対策案の追加条件（参考資料：桐井製作所 壁強度検討一覧）
+//  ・地震時（1.0G）のたわみ 1/100 以内　・部材長さ：スタッド・補強材 8.0m、P-100TW 9.0m、P-125TW 10.0m まで
+const ALT_DEFL = 100;
+
+// 壁全体の重量（kg/m²）：千鳥・ダブル・片側壁は1本が片面を支えるため片面分×2
+function wallTotalWeight(inp, r){
+  const w = WALLS.find(x => x.id === inp.wallType);
+  const split = !!(w && w.arr !== '共通');
+  return r.W1 * (split ? 2 : 1) + r.W2;
+}
+// 桐井製作所 壁種毎 建込下地一覧（地震時たわみ 1/100、側圧 1/200）2025.11.10 の限界高さ（mm）
+// lgs：スタッド LGS100、tw：タワーウォール100、c100：補強材 C-100×1.6。各 [@455, @303, @227.5]
+const KIRII_LIST = [{"no": "W05", "name": "Sウォール両面(片側12.5+12.5）+GW", "kg": 50.6, "base": "S", "sideA": "Z21+21", "sideB": "PB12.5＋12.5", "fill": "GW50 24K", "lgs": [4980, 6390, 6950], "tw": [5850, 6700, 7300], "c100": [7110, 7990, null]}, {"no": "W06", "name": "A-2000･WⅠ敷目板", "kg": 56.4, "base": "千鳥敷目", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K", "lgs": [null, 4050, 4980], "tw": [null, 4680, 5850], "c100": [null, 7420, 8000]}, {"no": "W07", "name": "スーパーウォールA", "kg": 55.2, "base": "S", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "ー", "lgs": [5000, 6180, 6730], "tw": [5550, 6500, 7100], "c100": [6890, 7750, null]}, {"no": "W08", "name": "スーパーウォールA +GW", "kg": 56.4, "base": "S", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K", "lgs": [5000, 6180, 6730], "tw": [5550, 6500, 7100], "c100": [6890, 7750, null]}, {"no": "W09", "name": "Sウォール目地部シーリング仕様", "kg": 32.4, "base": "S", "sideA": "Z21+21", "sideB": "ー", "fill": "ー", "lgs": [5000, 6970, 7930], "tw": [5850, 7550, 8000], "c100": [8000, 8000, null]}, {"no": "W10", "name": "Sウォール目地部シーリング仕様+GW", "kg": 33.6, "base": "S", "sideA": "Z21+21", "sideB": "ー", "fill": "GW50 24K", "lgs": [5000, 6970, 7750], "tw": [5850, 7500, 8000], "c100": [7900, 8000, null]}, {"no": "W11", "name": "PB12.5x2両面貼り", "kg": 34, "base": "S", "sideA": "PB12.5＋12.5", "sideB": "PB12.5＋12.5", "fill": "ー", "lgs": [5000, 6970, 7750], "tw": [5850, 7500, 8000], "c100": [7900, 8000, null]}, {"no": "W12", "name": "PB12.5x2両面貼り+GW", "kg": 35.2, "base": "S", "sideA": "PB12.5＋12.5", "sideB": "PB12.5＋12.5", "fill": "GW50 24K", "lgs": [5000, 6970, 7750], "tw": [5850, 7500, 8000], "c100": [7900, 8000, null]}, {"no": "W13", "name": "PB12.5x2片面貼り", "kg": 17, "base": "S", "sideA": "PB12.5＋12.5", "sideB": "ー", "fill": "ー", "lgs": [5000, 6970, 8000], "tw": [5850, 8000, 8000], "c100": [8000, 8000, null]}, {"no": "W14", "name": "PB12.5x2片面貼り+GW", "kg": 18.2, "base": "S", "sideA": "PB12.5＋12.5", "sideB": "ー", "fill": "GW50 24K", "lgs": [4980, 6970, 8000], "tw": [5850, 8000, 8000], "c100": [8000, 8000, null]}, {"no": "W15", "name": "A-2000･WⅡ", "kg": 57.6, "base": "ダブル", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K ダブル", "lgs": [5000, 6970, 7930], "tw": [5850, 7550, 8000], "c100": [8000, 8000, null]}, {"no": "W16", "name": "片面PB15x3＋GW", "kg": 34.8, "base": "S", "sideA": "Z15＋15＋15", "sideB": "ー", "fill": "GW50 24K", "lgs": [5000, 6970, 7750], "tw": [5850, 7500, 8000], "c100": [7900, 8000, null]}, {"no": "W17", "name": "S12･WⅠ 敷目板", "kg": 40, "base": "千鳥敷目", "sideA": "Z12.5＋Z 12.5", "sideB": "Z12.5＋Z 12.5", "fill": "GW50 24K", "lgs": [null, 4050, 4980], "tw": [null, 4680, 5850], "c100": [null, 7420, 8000]}, {"no": "W18", "name": "A-2000 WⅠストロング 敷目板", "kg": 56.4, "base": "千鳥敷目", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K", "lgs": [null, 4050, 4980], "tw": [null, 4680, 5850], "c100": [null, 7420, 8000]}, {"no": "W19", "name": "Sウォール，PB15x3＋GW", "kg": 67.2, "base": "S", "sideA": "Z21+21", "sideB": "Z15＋15＋15", "fill": "GW50 24K", "lgs": [4850, 5820, 6360], "tw": [5100, 6100, 6700], "c100": [6500, 7340, null]}, {"no": "W20", "name": "ドリーミィ65", "kg": 57.6, "base": "ダブル", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K ダブル", "lgs": [5000, 6970, 7930], "tw": [5850, 7550, 8000], "c100": [8000, 8000, null]}, {"no": "W21", "name": "ドリーミィ60", "kg": 56.4, "base": "千鳥", "sideA": "Z21+SH9.5", "sideB": "Z21+SH9.5", "fill": "GW50 24K ダブル", "lgs": [null, 4050, 4980], "tw": [null, 4680, 5850], "c100": [null, 7420, 8000]}, {"no": "W22", "name": "SウォールWR", "kg": 32.4, "base": "S", "sideA": "WRーZ21＋21", "sideB": "ー", "fill": "ー", "lgs": [5000, 6970, 7930], "tw": [5850, 7550, 8000], "c100": [8000, 8000, null]}, {"no": "W23", "name": "S12", "kg": 38.8, "base": "S", "sideA": "Z12.5＋Z 12.5", "sideB": "Z12.5＋Z 12.5", "fill": "ー", "lgs": [5000, 6850, 7460], "tw": [5850, 7200, 7800], "c100": [7610, 8000, null]}, {"no": "W24", "name": "S12・G1", "kg": 40, "base": "S", "sideA": "Z12.5＋Z 12.5", "sideB": "Z12.5＋Z 12.5", "fill": "GW50 24K", "lgs": [5000, 6850, 7460], "tw": [5850, 7200, 7800], "c100": [7610, 8000, null]}, {"no": "W25", "name": "Sウォール100-P50 GP", "kg": 50.6, "base": "千鳥GP", "sideA": "Z21+21", "sideB": "PB12.5＋12.5", "fill": "GW50 24K", "lgs": [null, 4050, 4980], "tw": [null, 4680, 5850], "c100": [null, 7320, 7930]}, {"no": "W26", "name": "Sウォール両面(片側12.5+12.5）", "kg": 49.4, "base": "S", "sideA": "Z21+21", "sideB": "PB12.5＋12.5", "fill": "ー", "lgs": [4980, 6390, 6950], "tw": [5850, 6700, 7300], "c100": [7110, 7990, null]}, {"no": "W27", "name": "PB12.5片面貼り", "kg": 8.5, "base": "S", "sideA": "PB12.5", "sideB": "ー", "fill": "ー", "lgs": [5000, 6970, 8000], "tw": [5850, 8000, 8000], "c100": [8000, 8000, null]}, {"no": "", "name": "Sウォール･ワイド", "kg": 40.9, "base": "S", "sideA": "Z21+21＋PB12.5", "sideB": "ー", "fill": "ー", "lgs": [5000, 6810, 7410], "tw": [5850, 7150, 7750], "c100": [7560, 8000, null]}, {"no": "", "name": "Sウォール･ワイド,12.5+12.5", "kg": 57.9, "base": "S", "sideA": "Z21+21＋PB12.5", "sideB": "PB12.5＋12.5", "fill": "ー", "lgs": [5000, 6120, 6680], "tw": [5500, 6450, 7050], "c100": [6830, 7700, null]}, {"no": "", "name": "Sウォール･ワイド,12.5+12.5+GW", "kg": 59.1, "base": "S", "sideA": "Z21+21＋PB12.5", "sideB": "PB12.5＋12.5", "fill": "GW50 24K", "lgs": [5000, 6090, 6640], "tw": [5450, 6400, 7000], "c100": [6790, 7650, null]}, {"no": "", "name": "B15・G1", "kg": 47.6, "base": "S", "sideA": "Z15＋15", "sideB": "Z15＋15", "fill": "GW50 24K", "lgs": [5000, 6510, 7090], "tw": [5850, 6850, 7450], "c100": [7240, 8000, null]}, {"no": "", "name": "A21・G1", "kg": 66, "base": "S", "sideA": "Z21+21", "sideB": "Z21+21", "fill": "GW50 24K", "lgs": [4850, 5880, 6420], "tw": [5200, 6200, 6750], "c100": [6570, 7420, null]}];
+function kiriiMatch(inp, r){
+  const Ww = wallTotalWeight(inp, r);
+  const w = WALLS.find(x => x.id === inp.wallType);
+  const base = !w ? 'S' : w.arr === '千鳥' ? (w.shiki ? '千鳥敷目' : '千鳥') : w.arr === '共通×2' ? 'ダブル' : 'S';
+  let pool = KIRII_LIST.filter(k => String(k.base).indexOf(base.replace('千鳥敷目', '敷目')) >= 0 || k.base === base);
+  if (!pool.length) pool = KIRII_LIST;
+  const heavier = pool.filter(k => k.kg >= Ww - 0.05).sort((x, y) => x.kg - y.kg);
+  const row = heavier[0] || pool.slice().sort((x, y) => y.kg - x.kg)[0];
+  return {Ww, base, row, exact: !!heavier[0]};
+}
+// 強度上の限界高さ（cm）。たわみ条件を付けるときは den を渡す
+function maxHeight(inp, studId, den){
+  const okAt = H => {
+    const r = calc(Object.assign({}, inp, {studId, L:H}, inp.mode === 'ceiling' ? {ch: Math.min(num(inp.ch), H - 1)} : {}));
+    if (!r.ok) return false;
+    const st = r.lambdaOk && (r.mode === 'wall' ? r.ratio1 <= 1 && r.combined <= 1 : r.ratioL <= 1 && r.ratioS <= 1);
+    return st && (!den || r.deflRatio >= den);
+  };
+  let lo = 50, hi = 1500;
+  if (!okAt(lo)) return 0;
+  if (okAt(hi)) return hi;
+  for (let i = 0; i < 20 && hi - lo > 1; i++) { const m = Math.floor((lo + hi) / 2); if (okAt(m)) lo = m; else hi = m; }
+  return lo;
+}
+function maxLen(s){ return !s ? Infinity : s.tube ? Infinity : s.id === 'TW-100' ? 900 : s.id === 'TW-125' ? 1000 : 800; }
+const PORTAL_S = [3600, 3300, 3000, 2700, 2400, 2100, 1800, 1500, 1200, 900];
+function portalCheck(inp, tube, S, n){
+  const H = num(inp.L), E = num(inp.E), den = num(inp.deflDen) > 0 ? num(inp.deflDen) : 200;
+  const k = inp.mode === 'ceiling' ? num(inp.kh) : num(inp.k);
+  const base = calc(inp);
+  if (!base.ok) return null;
+  const Wwall = wallTotalWeight(inp, base);                     // 壁全体の重量 kg/m²（千鳥等は片面分×2）
+  const span = H / (n + 1);
+  // 内側のスタッド（スパンが短くなる）
+  const rs = calc(Object.assign({}, inp, {L: span}));
+  const Sc = S / 10, F = tube.F, fb = tube.F;
+  const trib = span;                                             // 横材1段が受ける高さ
+  const q = k * Wwall / 10000 * trib;                            // kg/cm（面外）
+  const qv = Wwall / 10000 * (H - span * n);                     // kg/cm（最上段に載る上部スタッド分、安全側）
+  const Mh = q * Sc * Sc / 8, Mv = qv * Sc * Sc / 8;
+  const beamS = Mh / tube.Zx / fb + Mv / tube.Zy / fb;           // 短期
+  const beamL = Mv / tube.Zy / (fb / 1.5);                       // 長期
+  const beamD = 5 * q * Math.pow(Sc, 4) / (384 * E * tube.Ix);
+  const P = q * Sc;                                              // 縦材が受ける1段あたりの水平力
+  const Mp = n === 1 ? P * H / 4 : P * H / 3;
+  const postS = Mp / tube.Zx / F;
+  const postD = n === 1 ? P * Math.pow(H, 3) / (48 * E * tube.Ix) : 23 * P * Math.pow(H, 3) / (648 * E * tube.Ix);
+  const lamP = H / tube.ix;
+  const ok = rs.ok && rs.overall && rs.deflRatio >= ALT_DEFL && beamS <= 1 && beamL <= 1 && postS <= 1 && lamP <= LIMIT_LAMBDA && Sc / beamD >= ALT_DEFL && H / postD >= ALT_DEFL && maxLen(STUDS.find(x => x.id === inp.studId)) >= span;
+  return {ok, tube, S, n, span, Wwall, studR: rs, q, P, Mh, Mv, Mp, beamS, beamL, postS, lamP,
+          beamDefl: Sc / beamD, postDefl: H / postD, deflOk: Sc / beamD >= den && H / postD >= den, den};
+}
+
+/* NG のときの対策（優先順位）
+   ① ピッチ変更（@227.5 以下も可）→ ② 補強材（関包 RC）→ ③ タワーウォール（オクジュー）
+   → ④ 角パイプ門型＋中間スタッド → ⑤ 全て角パイプ → ⑥ 全て NG
+   部材幅はすべて使用スタッド幅以下。各案は実際に再計算して OK のものだけを示す */
+function alternatives(inp){
+  const base = calc(inp);
+  if (!base.ok || base.overall) return null;
+  const a = num(inp.a), cur = STUDS.find(s => s.id === inp.studId);
+  const lim = studDepth(cur);
+  const limText = `使用スタッド幅 ${sgc(lim)} mm 以下`;
+  const H = num(inp.L);
+  const run = patch => { const r = calc(Object.assign({}, inp, patch)); return r.ok && r.overall && r.deflRatio >= ALT_DEFL && maxLen(r.stud) >= H ? r : null; };
+  const narrower = ALT_PITCHES.filter(p => p < a - 1e-9);
+  const tryMembers = (list, pitches) => {
+    for (const p of pitches) for (const s of list) { const r = run({studId:s.id, a:p}); if (r) return {s, p, r}; }
+    return null;
+  };
+  const out = [];
+  // ①
+  let o = null;
+  for (const p of narrower) { const r = run({a:p}); if (r) { o = {no:1, kind:'pitch', title:`ピッチを @${sgc(p * 10)} に変更`, detail:`${cur.name}（${cur.code}）のまま`, patch:{a:p}, r}; break; } }
+  out.push(o || {no:1, kind:'pitch', title:'ピッチ変更', none: maxLen(cur) < H ? `壁高 ${sgc(H / 100)}m がメーカー規定の部材長さ ${sgc(maxLen(cur) / 100)}m を超えるため不可` : `@${sgc(ALT_PITCHES[ALT_PITCHES.length - 1] * 10)} まで狭めても NG（たわみ 1/${ALT_DEFL} 以内を含む）`});
+  // ②
+  const rcs = STUDS.filter(s => s.group === 'RC' && s.size <= lim + 1e-9 && s.id !== inp.studId).sort((x, y) => x.W - y.W);
+  let t = tryMembers(rcs, [a].concat(narrower));
+  out.push(t ? {no:2, kind:'rc', title:`補強材 ${t.s.code}（${t.s.dim}）に変更`, detail:`${t.s.maker}、ピッチ @${sgc(t.p * 10)}、${limText}`, patch:{studId:t.s.id, a:t.p}, r:t.r}
+             : {no:2, kind:'rc', title:'補強材に変更', none: rcs.length ? `${limText}の補強材（関包 RC・桐井 LG）では NG` : `${limText}の補強材がありません`});
+  // ③
+  const tws = STUDS.filter(s => s.group === 'TW' && s.size <= lim + 1e-9 && s.id !== inp.studId).sort((x, y) => x.size - y.size);
+  t = tryMembers(tws, [a].concat(narrower).filter(p => p >= 22.75 - 1e-9 && p <= 45.5 + 1e-9));
+  out.push(t ? {no:3, kind:'tw', title:`タワーウォール ${t.s.code}（${t.s.dim}）に変更`, detail:`ピッチ @${sgc(t.p * 10)}（メーカー仕様 @227.5〜455）、スラブ to スラブ固定`, patch:{studId:t.s.id, a:t.p}, r:t.r}
+             : {no:3, kind:'tw', title:'タワーウォール（オクジュー）に変更', none: tws.length ? `${limText}のタワーウォール（@227.5〜455）では NG` : `タワーウォールは幅100・125mm のため、${limText}に納まりません`});
+  // ④
+  const tubes = STUDS.filter(s => s.tube && s.depth <= lim + 1e-9).sort((x, y) => x.W - y.W || y.Zx - x.Zx);
+  let pc = null;
+  if (cur && !cur.tube) {
+    // 鋼材量（kg/m：縦材 W・H/S ＋ 横材 W・n）が最小の組み合わせ
+    const Hm = num(inp.L) / 100;
+    for (const n of [1, 2]) for (const tb of tubes) for (const S of PORTAL_S) {
+      const steel = tb.W * Hm / (S / 1000) + tb.W * n;
+      if (pc && steel >= pc.steel) continue;
+      const c = portalCheck(inp, tb, S, n); if (c && c.ok) { c.steel = steel; pc = c; }
+    }
+  }
+  out.push(pc ? {no:4, kind:'portal', title:`角パイプ門型 □-${pc.tube.dim} @${pc.S}＋横材${pc.n}段、中は ${cur.code} @${sgc(a * 10)}`, detail:`縦材・横材とも □-${pc.tube.dim}（STKR400）${pc.tube.rot ? '・短辺を壁厚方向' : ''}、スタッドのスパン ${sgc(pc.span)} cm、鋼材量 約${sgc(pc.steel)} kg/m（壁長さ1mあたり、鋼材量が最小の組み合わせ）`, portal:pc}
+              : {no:4, kind:'portal', title:'角パイプ門型＋中間スタッド', none: cur && cur.tube ? '現在が角パイプのため対象外' : `${limText}の角パイプ・横材2段まででは NG`});
+  // ⑤
+  o = null;
+  const tp = [a].concat([45.5, 30.3].filter(p => p < a - 1e-9));
+  outer2: for (const p of tp) for (const s of tubes.filter(x => !cur || x.id !== cur.id)) {
+    const r = run({studId:s.id, a:p});
+    if (r) { o = {no:5, kind:'tube', title:`全て角パイプ □-${s.dim}（STKR400）@${sgc(p * 10)}`, detail:`幅 ${s.depth} mm（${limText}）${s.rot ? '・短辺を壁厚方向' : ''}、自重 ${s.W} kg/m`, patch:{studId:s.id, a:p}, r}; break outer2; }
+  }
+  out.push(o || {no:5, kind:'tube', title:'全て角パイプ', none: tubes.length ? `${limText}の角パイプでは NG` : `${limText}の角パイプがありません`});
+  const best = out.find(x => !x.none) || null;
+  return {base, options: out, best, allNg: !best};
+}
+
+function guideCheck(stud, Hcm){
+  if (!stud || !stud.size || stud.group === 'RC' || stud.group === 'TW' || !GUIDE_ROWS.some(g => stud.size in g.max)) return null;
+  const h = Hcm / 100;
+  return GUIDE_ROWS.map(g => {
+    const max = g.max[stud.size];
+    return {name:g.name, max: max == null ? null : max, over: max == null ? null : h > max};
+  });
+}
+// </calc>
+
+/* ---------- UI ---------- */
+const $ = id => document.getElementById(id);
+const FIELD_IDS = ['date','company','maker','stud','a','L','Lb','ch','Lc','W2','Wc','k','kh','kv','fb','E','F','fcManual','deflDen'];
+const STORE_KEY = 'kabeshitaji-kento-v3';
+
+const fx = (n, d) => Number.isFinite(n) ? n.toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}) : '—';
+const sg = n => Number.isFinite(n) ? Number(n.toPrecision(4)).toLocaleString('en-US', {maximumFractionDigits:8}) : '—';
+const ratioText = r => Number.isFinite(r) ? '1/' + fx(Math.floor(r), 0) : '—';
+function todayStr(){
+  const d = new Date(), p = x => String(x).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+const clone = o => JSON.parse(JSON.stringify(o));
+
+let state = Object.assign(clone(DEFAULTS), {date: todayStr()});
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+  if (saved && typeof saved === 'object') {
+    state = Object.assign(state, saved);
+    if (!Array.isArray(state.layers) || !state.layers.length) state.layers = clone(DEFAULTS.layers);
+  }
+} catch (e) { /* 保存なしでも動作します */ }
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* 無視 */ } }
+
+/* --- 入力欄 --- */
+function buildSelects(){
+  const opt = s => `<option value="${s.id}">${s.name}（${s.code}）</option>`;
+  $('stud').innerHTML =
+    `<optgroup label="JIS品（関包スチール計算書の値）">${STUDS.filter(s => s.calc && s.group === 'JIS').map(opt).join('')}</optgroup>` +
+    `<optgroup label="カタログ値（関包スチール 壁下地材断面性能表）">${STUDS.filter(s => s.calc && s.group === 'CAT').map(opt).join('')}</optgroup>` +
+    `<optgroup label="三洋工業 JIS品（公表値）">${STUDS.filter(s => s.calc && s.group === 'SANYO').map(opt).join('')}</optgroup>` +
+    `<optgroup label="桐井製作所">${STUDS.filter(s => s.maker === '桐井製作所' && s.group !== 'USER').map(opt).join('')}</optgroup>` +
+    `<optgroup label="補強材（関包スチール RC）">${STUDS.filter(s => s.group === 'RC' && s.maker === '関包スチール').map(opt).join('')}</optgroup>` +
+    (STUDS.some(s => s.group === 'USER') ? `<optgroup label="登録データ">${STUDS.filter(s => s.group === 'USER').map(s => `<option value="${esc(s.id)}">${esc(s.maker)}：${esc(s.name)}（${esc(s.dim)}）</option>`).join('')}</optgroup>` : '') +
+    `<optgroup label="タワーウォール（オクジュー）">${STUDS.filter(s => s.group === 'TW').map(opt).join('')}</optgroup>` +
+    `<optgroup label="角パイプ（STKR400・鉄骨下地）">${STUDS.filter(s => s.tube).map(s => `<option value="${s.id}">角パイプ □-${s.dim}${s.rot ? '（短辺を壁厚方向）' : ''}</option>`).join('')}</optgroup>`;
+}
+function buildWallTypes(){
+  const groups = [...new Set(WALLS.map(w => w.s))];
+  $('wallType').innerHTML = `<option value="">選択しない（面材を手入力）</option>` +
+    groups.map(g => `<optgroup label="${g}">${WALLS.filter(w => w.s === g).map(w => `<option value="${w.id}">${w.name}${w.tld ? `　TLD-${w.tld}` : ''}　${w.t}mm</option>`).join('')}</optgroup>`).join('');
+}
+function wallTypeHint(){
+  const w = WALLS.find(x => x.id === state.wallType);
+  if (!w) { $('wallTypeHint').textContent = 'タイガードリーミィ、A60 は下地構成が特殊なため収録していません。'; return; }
+  const per = w.arr === '千鳥' ? '千鳥@303（片側606）：1本のスタッドは片面の面材を支持'
+    : w.arr === '共通×2' ? 'ダブルスタッド@606：各列のスタッドは片面の面材を支持'
+    : w.arr === '片側' ? `片面壁@${w.pitch * 10}：片面の面材を支持` : `共通配置@${w.pitch * 10}：1本のスタッドが両面の面材を支持`;
+  $('wallTypeHint').textContent = `${w.arr}・${w.tld ? `TLD-${w.tld}・` : ''}${w.cert}（カタログ ${w.p}）。カタログからはボードの種類・重さと副資材（吸音材${w.shiki ? '・敷目板' : ''}）だけを使います。${per}。面材・ピッチ・フレドメを自動入力しました（ピッチ・フレドメはボードをどのスタッドが支えるかで決まるため）。スタッドは選択中の部材のままです。各欄は個別に変更できます。`;
+}
+function applyWallType(id){
+  state.wallType = id;
+  const pr = wallPreset(id);
+  if (pr) Object.assign(state, JSON.parse(JSON.stringify(pr.patch)));
+  writeInputs(); update();
+}
+
+function layerOptions(sel){
+  return BOARDS.map(b => `<option value="${b.id}" ${b.id === sel ? 'selected' : ''}>${b.id}</option>`).join('') +
+    `<option value="${CUSTOM_ID}" ${sel === CUSTOM_ID ? 'selected' : ''}>その他（kg/m² を手入力）</option>`;
+}
+function overOptions(sel){
+  return `<optgroup label="せっこうボード">${BOARDS.map(b => `<option value="B:${b.id}" ${sel === 'B:' + b.id ? 'selected' : ''}>${b.id}</option>`).join('')}</optgroup>` +
+    `<optgroup label="ケイ酸カルシウム板（JIS A 5430）">${CALSIL.map(c => `<option value="C:${c.id}" ${sel === 'C:' + c.id ? 'selected' : ''}>${c.id}（${c.w} kg/m²）</option>`).join('')}</optgroup>` +
+    `<optgroup label="その他"><option value="KG" ${sel === 'KG' ? 'selected' : ''}>石・タイル張り等（1m² あたり kg を入力）</option></optgroup>`;
+}
+function renderOver(){
+  const list = state.over || [];
+  $('over').innerHTML = list.map((o, i) => {
+    const kg = o.opt === 'KG';
+    return `<div class="ov" data-i="${i}">
+      <select class="o-opt" aria-label="増し貼り${i + 1}の種類">${overOptions(o.opt)}</select>
+      ${kg ? `<input class="o-note" type="text" value="${(o.note || '').replace(/"/g, '&quot;')}" placeholder="名称（例：磁器タイル張り 接着剤含む）" aria-label="増し貼り${i + 1}の名称">` : ''}
+      ${kg ? `<div class="unit"><input class="o-kg" type="number" step="any" inputmode="decimal" value="${o.kg}" placeholder="kg/m²" aria-label="増し貼り${i + 1}の重さ"><span>kg/m²</span></div>`
+           : `<div class="unit"><input class="o-n" type="number" min="1" step="1" inputmode="numeric" value="${o.n}" aria-label="増し貼り${i + 1}の枚数"><span>枚</span></div>`}
+      <select class="o-face" aria-label="増し貼り${i + 1}の面"><option value="A" ${o.face === 'A' ? 'selected' : ''}>A面</option><option value="B" ${o.face === 'B' ? 'selected' : ''}>B面</option><option value="both" ${o.face === 'both' ? 'selected' : ''}>両面</option></select>
+      <button type="button" class="icon-btn o-del" aria-label="増し貼り${i + 1}を削除">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderLayers(){
+  $('layers').innerHTML = state.layers.map((l, i) => `
+    <div class="layer" data-i="${i}">
+      <select class="l-id" aria-label="面材${i + 1}の種類">${layerOptions(l.id)}</select>
+      <div class="unit"><input class="l-n" type="number" min="1" step="1" inputmode="numeric" value="${l.n}" aria-label="面材${i + 1}の枚数"><span>枚</span></div>
+      <button type="button" class="icon-btn l-del" aria-label="面材${i + 1}を削除" ${state.layers.length === 1 ? 'disabled' : ''}>×</button>
+      ${l.id === CUSTOM_ID && l.note ? `<p class="hint custom">${l.note}</p>` : ''}
+      ${l.id === CUSTOM_ID ? `<div class="unit custom"><input class="l-custom" type="number" step="any" inputmode="decimal" value="${l.custom}" placeholder="例: グラスウール 1.2" aria-label="面材${i + 1}の面重量"><span>kg/m²</span></div>` : ''}
+    </div>`).join('');
+}
+function writeInputs(){
+  FIELD_IDS.forEach(id => {
+    const key = id === 'stud' ? 'studId' : id;
+    $(id).value = state[key];
+  });
+  renderLayers();
+  if (!Array.isArray(state.over)) state.over = [];
+  renderOver();
+  $('wallType').value = state.wallType || '';
+}
+function readInputs(){
+  FIELD_IDS.forEach(id => {
+    const key = id === 'stud' ? 'studId' : id;
+    state[key] = $(id).value;
+  });
+}
+function applyMode(){
+  const m = state.mode === 'ceiling' ? 'ceiling' : 'wall';
+  document.querySelectorAll('[data-mode]').forEach(el => { el.hidden = el.dataset.mode !== m; });
+  document.querySelectorAll('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === m)));
+  $('lblL').textContent = m === 'wall' ? '壁高 L（座屈長さ Lk = L）' : '壁高 H（座屈長さ Hk = H）';
+}
+function syncChips(){
+  document.querySelectorAll('.chips[data-for]').forEach(g => {
+    const cur = num($(g.dataset.for).value);
+    g.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(num(c.dataset.v) === cur)));
+  });
+  document.querySelectorAll('.chips[data-state]').forEach(g => {
+    const cur = state[g.dataset.state];
+    g.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.v === cur)));
+  });
+}
+
+/* --- 結果の描画 --- */
+function row(label, expr, value, unit, cls){
+  return `<div class="row ${cls || ''}"><span class="k">${label}</span><span class="v">${value}<span class="u">${unit || ''}</span></span>${expr ? `<span class="x">${expr}</span>` : ''}</div>`;
+}
+function judge(title, valText, limText, ratio, ok, expr, isRef){
+  const pct = Math.max(0, Math.min(1, ratio)) * 100;
+  const cls = isRef ? (ok ? 'ref ok' : 'ref') : (ok ? 'ok' : 'ng');
+  const badge = isRef ? (ok ? '参考 OK' : '参考 超過') : (ok ? 'OK' : 'NG');
+  return `<div class="judge ${cls}">
+    <div class="judge-top"><span>${title}</span><span class="badge">${badge}</span></div>
+    <div class="judge-main"><span class="judge-val">${valText}</span><span class="judge-lim">${limText}</span></div>
+    ${expr ? `<p class="x">${expr}</p>` : ''}
+    <div class="meter" aria-hidden="true"><i style="width:${pct.toFixed(1)}%"></i></div></div>`;
+}
+function fcExpr(r){
+  if (r.fcIsManual) return `手入力値を使用（自動算定では ${fx(r.fcAuto.fc, 1)}）`;
+  const c = r.fcAuto;
+  if (c.zone === 'slender') {
+    return `Λ = π√(E/0.6F) = ${fx(c.Lam, 2)}、λ/Λ = ${fx(r.lambda, 1)} / ${fx(c.Lam, 2)} = ${fx(c.r, 3)}（>1）<br>fc = 0.277・F / (λ/Λ)² = 0.277 × ${sg(r.F)} / ${fx(c.r, 3)}²`;
+  }
+  return `Λ = ${fx(c.Lam, 2)}、λ/Λ = ${fx(c.r, 3)}（≦1）<br>fc = (1 − 0.4(λ/Λ)²)・F / ν、ν = 1.5 + (2/3)(λ/Λ)²`;
+}
+function weightRows(r){
+  const ov = r.lw.ov;
+  const faceTxt = f => f === 'both' ? '両面' : f + '面';
+  const items = r.lw.items.map(it => `${it.label}：${sg(it.unit)} × ${it.n}${it.label.indexOf('（') >= 0 || it.label === 'その他（手入力）' ? '' : '枚'}`).join('<br>') +
+    (ov && ov.items.length ? `<br>— 増し貼り・仕上げ —<br>` + ov.items.map(it => `${faceTxt(it.face)}：${it.label} ${sg(it.unit)}${it.perSheet ? ` × ${it.n}枚` : ''}`).join('<br>') +
+      `<br>A面 ${sg(ov.A)}、B面 ${sg(ov.B)} → ${ov.split ? '重い方の片面' : '両面合計'} ${sg(ov.per)}` : '');
+  const fb = r.lw.fallback.length ? `<br>関包値の記載がないためカタログ値を使用：${r.lw.fallback.join('、')}` : '';
+  const basisText = r.basis === 'kanpo' ? '関包スチール計算書の値' : '吉野石膏カタログ代表値';
+  return row('仕上材重量 <small>W1</small>', `${items}<br>基準：${basisText}${fb}`, fx(r.W1, 2), 'kg/m²') +
+         row('下地材重量 <small>W2</small>', r.W2auto ? (r.stud.tube ? `自動：${r.stud.W} / ${sg(r.a / 100)} + 1.0` : `自動：5 × 30.3 / ${sg(r.a)}`) : '手入力', fx(r.W2, 2), 'kg/m²') +
+         row('壁の設計荷重 <small>W = W1 + W2</small>', `${sg(r.W1)} + ${sg(r.W2)}`, fx(r.W, 2), 'kg/m²') +
+         row('単位換算 <small>w = W / 10000</small>', `${sg(r.W)} / 10000`, sg(r.w), 'kg/cm²');
+}
+function propsBlock(r){
+  const s = r.stud;
+  return `<div class="sec"><h3>断面性能 <small>${s.name}（${s.code}） ${s.dim}</small></h3>
+    <div class="fig">${figSection(r)}</div>
+    ${Number.isFinite(r.lenMax) ? judge('部材長さ（メーカー規定）', `${sg(r.H / 100)} m`, `≦ ${sg(r.lenMax / 100)} m`, r.H / r.lenMax, r.lenOk, r.lenOk ? '' : '規定長さを超えるため、角パイプ等で計画してください') : ''}
+    <div class="props">
+      <div><small>断面積 A</small><b>${s.A}<span>cm²</span></b></div>
+      <div><small>断面2次モーメント I</small><b>${s.Ix}<span>cm⁴</span></b></div>
+      <div><small>断面係数 Z</small><b>${s.Zx}<span>cm³</span></b></div>
+      <div><small>断面2次半径 i（${r.ax.name}）</small><b>${r.ax.i}<span>cm</span></b></div>
+    </div></div>`;
+}
+function lambdaJudge(r, sym){
+  return judge(`細長比 λ = ${sym}k / i`, fx(r.lambda, 1), '≦ ' + LIMIT_LAMBDA, r.lambda / LIMIT_LAMBDA, r.lambdaOk,
+    r.ax.cand.map(c => `${c.axis === 'x' ? '強軸' : '弱軸'} ${sg(c.len)} / ${sg(c.i)} = ${fx(c.lambda, 1)}`).join('、') +
+    (r.ax.cand.length > 1 ? '　→ 大きい方' : '') + (r.ax.auto ? `（フレドメ${r.ax.cand.length > 1 ? '有' : '無'}）` : '（手動指定）'));
+}
+function deflBlock(r, sym, deltaExpr){
+  return `<div class="sec"><h3>たわみ <small>参考</small></h3>
+    ${deltaExpr}
+    ${judge(`スパンに対する比 ${sym} / δ`, ratioText(r.deflRatio), '≧ 1/' + sg(r.den), Math.min(1, r.den / r.deflRatio), r.deflOk, `${sg(r.H)} / ${fx(r.delta, 3)} cm　基準は詳細設定で変更できます`, true)}
+  </div>`;
+}
+function guideBlock(r){
+  const g = guideCheck(r.stud, r.H);
+  if (!g) return '';
+  const anyOver = g.some(x => x.over === true);
+  const lines = g.map(x => `<div class="g"><span>${x.name}</span>${x.max == null ? '<span class="tag na">該当なし</span>' : `<span class="tag ${x.over ? 'over' : ''}">${x.over ? '目安超' : '目安内'}（${x.max.toFixed(1)}m以下）</span>`}</div>`).join('');
+  const tall = (r.H > 500 || anyOver)
+    ? `<p class="note">壁高さがカタログの目安を超える条件があります。目安は「壁に 24.4kgf/m² が加わったとき、たわみ ≦ 壁高さ×1/240」を条件にしたもので、強度計算とは別の基準です。${r.H > 500 ? '5mを超える場合は別途検討が必要です（JASS26注記）。' : ''}高壁の参考として、オクジュー P-100TW・P-125TW、関包スチール タフBOX は「資料」タブを参照してください。</p>` : '';
+  return `<div class="card"><div class="sec"><h3>壁高さの目安との照合 <small>吉野石膏カタログ P.50・判定なし</small></h3><div class="guide">${lines}</div>${tall}</div></div>`;
+}
+
+
+/* ---------- 図解（関包スチール計算書と同じ構成。数値は入力に連動） ---------- */
+const DEFS = `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
+const ln = (x1, y1, x2, y2, cls, extra) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" ${cls ? `class="${cls}"` : ''} ${extra || ''}/>`;
+function arrow(x1, y1, x2, y2, cls, w){
+  w = w || 1.5;
+  const t = Math.atan2(y2 - y1, x2 - x1), h = 6 + w * 1.6, hw = h * 0.45;
+  const bx = x2 - h * Math.cos(t), by = y2 - h * Math.sin(t), px = -Math.sin(t), py = Math.cos(t);
+  return `<g class="${cls || ''}"><line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="currentColor" stroke-width="${w}"/><path d="M${x2},${y2} L${bx + px * hw},${by + py * hw} L${bx - px * hw},${by - py * hw} z" fill="currentColor" stroke="none"/></g>`;
+}
+const tx = (x, y, t, cls, anchor) => `<text x="${x}" y="${y}" class="${cls || 't'}" text-anchor="${anchor || 'start'}">${t}</text>`;
+function vdim(x, y1, y2, label, side){
+  const tick = y => ln(x - 4, y, x + 4, y, '', 'stroke-width="1"');
+  const ym = (y1 + y2) / 2;
+  return `<g class="mut">${ln(x, y1, x, y2, '', 'stroke-width="1"')}${tick(y1)}${tick(y2)}</g>` +
+    tx(side === 'l' ? x - 6 : x + 6, ym + 4, label, 'n', side === 'l' ? 'end' : 'start');
+}
+function pinSupports(x, yTop, yBot){
+  return `<g class="mut">` +
+    `<path d="M${x - 8},${yTop - 9} L${x + 8},${yTop - 9} L${x},${yTop} z" fill="none" stroke="currentColor"/>${ln(x - 13, yTop - 9, x + 13, yTop - 9)}` +
+    `<path d="M${x - 8},${yBot + 9} L${x + 8},${yBot + 9} L${x},${yBot} z" fill="none" stroke="currentColor"/>${ln(x - 13, yBot + 9, x + 13, yBot + 9)}</g>`;
+}
+function studBar(x, y1, y2){ return `<rect x="${x - 3}" y="${y1}" width="6" height="${y2 - y1}" class="acc" fill="currentColor"/>`; }
+
+function figWallLong(r){
+  const x = 100, y1 = 46, y2 = 196;
+  return `<figure><svg viewBox="0 0 240 225" role="img" aria-label="長期：スタッドにかかる軸力">${DEFS}
+    ${pinSupports(x, y1, y2)}${studBar(x, y1, y2)}
+    <g class="red">${arrow(x, 4, x, y1 - 11, 'red', 2.2)}</g>
+    ${tx(x + 10, 18, `P = ${fx(r.P, 1)} kg`, 'n')}
+    ${vdim(170, y1, y2, `L = ${sg(r.H)} cm`)}
+    ${tx(x - 14, (y1 + y2) / 2, `スタッド`, 't', 'end')}${tx(x - 14, (y1 + y2) / 2 + 15, `@${sg(r.a)}`, 'n', 'end')}
+  </svg><figcaption>長期：P = W・L・a（スタッド1本の軸力）</figcaption></figure>`;
+}
+function figWallQuake(r){
+  const x = 120, y1 = 46, y2 = 196, n = 7;
+  let ar = '';
+  for (let i = 0; i < n; i++) { const y = y1 + 10 + i * (y2 - y1 - 20) / (n - 1); ar += arrow(40, y, x - 7, y, 'red', 1.3); }
+  return `<figure><svg viewBox="0 0 250 225" role="img" aria-label="地震時：壁重量を水平荷重とする">${DEFS}
+    ${pinSupports(x, y1, y2)}${studBar(x, y1, y2)}
+    <g class="red">${ar}${arrow(x, 4, x, y1 - 11, 'red', 2.2)}</g>
+    <path d="M${x},${y1} Q${x + 46},${(y1 + y2) / 2} ${x},${y2}" fill="none" stroke="currentColor" stroke-dasharray="4 3" class="mut"/>
+    ${tx(x + 10, 18, `P = ${fx(r.P, 1)} kg`, 'n')}
+    ${tx(36, y2 + 22, `w' = ${sg(r.wd)} kg/cm`, 'n')}
+    ${tx(x + 27, (y1 + y2) / 2 + 4, `δ = ${fx(r.delta, 2)}`, 'n')}
+    ${vdim(214, y1, y2, `L`)}
+  </svg><figcaption>地震時：w' = k・W・a を水平に（k = ${sg(r.k)} G）</figcaption></figure>`;
+}
+function figCeilElev(r){
+  const top = 30, bot = 196, xl = 46, xr = 262;
+  const yc = bot - (bot - top) * Math.min(0.92, Math.max(0.08, r.ch / r.H));
+  const bolts = [110, 160, 210].map(x => ln(x, top, x, yc, 'mut', 'stroke-dasharray="3 3"')).join('');
+  return `<figure class="wide"><svg viewBox="0 0 330 240" role="img" aria-label="天井を受ける壁の立面">${DEFS}
+    <rect x="${xl - 16}" y="${top - 6}" width="${xr - xl + 32}" height="6" fill="currentColor"/>
+    <rect x="${xl - 16}" y="${bot}" width="${xr - xl + 32}" height="6" fill="currentColor"/>
+    <g class="mut">${arrow(150, 12, 110, 12, 'mut', 1)}${arrow(150, 12, 190, 12, 'mut', 1)}</g>${tx(150, 8, '面外方向', 't', 'middle')}
+    <rect x="${xl - 4}" y="${top}" width="8" height="${bot - top}" class="acc" fill="currentColor"/>
+    <rect x="${xr - 4}" y="${top}" width="8" height="${bot - top}" class="mut" fill="currentColor" opacity=".55"/>
+    ${bolts}
+    <rect x="${xl + 4}" y="${yc - 3}" width="${xr - xl - 8}" height="6" class="red" fill="currentColor"/>
+    ${tx(xr - 10, yc - 8, '天井面', 't', 'end')}
+    <g class="red">${arrow(150, yc + 16, xl + 10, yc + 16, 'red', 2.4)}</g>${tx(156, yc + 20, `慣性力 P = ${fx(r.P, 1)} kg`, 'n')}
+    ${tx(xl + 10, bot - 24, 'スタッド', 't')}${tx(xl + 10, bot - 9, `ピッチ p = ${sg(r.a)}`, 'n')}
+    ${vdim(288, top, yc, `ah ${sg(r.ah)}`)}${vdim(288, yc, bot, `ch ${sg(r.ch)}`)}${vdim(14, top, bot, ``)}
+    ${tx(4, top - 10, `H = ${sg(r.H)}`, 'n')}
+    <g class="mut">${ln(xl, 222, xr, 222, '', 'stroke-width="1"')}${ln(xl, 217, xl, 227)}${ln(xr, 217, xr, 227)}</g>
+    ${tx((xl + xr) / 2, 236, `天井の奥行 L = ${sg(r.Lc)} cm`, 'n', 'middle')}
+  </svg><figcaption>天井からの慣性力を受ける壁（寸法 cm）</figcaption></figure>`;
+}
+function figCeilModel(r){
+  const x = 120, y1 = 40, y2 = 196, n = 7;
+  const yc = y2 - (y2 - y1) * Math.min(0.92, Math.max(0.08, r.ch / r.H));
+  let ar = '';
+  for (let i = 0; i < n; i++) { const y = y1 + 10 + i * (y2 - y1 - 20) / (n - 1); ar += arrow(74, y, x - 7, y, 'red', 1.1); }
+  return `<figure><svg viewBox="0 0 250 225" role="img" aria-label="スタッドの荷重モデル">${DEFS}
+    ${pinSupports(x, y1, y2)}${studBar(x, y1, y2)}
+    <g class="red">${ar}${arrow(8, yc, x - 7, yc, 'red', 3)}${arrow(x, 2, x, y1 - 11, 'red', 2)}</g>
+    ${tx(4, yc - 8, `P = ${fx(r.P, 1)} kg`, 'n')}
+    ${tx(x + 8, 14, `N = ${fx(r.N, 1)} kg`, 'n')}
+    ${tx(6, y2 + 22, `w = ${sg(r.wh)} kg/cm`, 'n')}
+    ${vdim(186, y1, yc, `ah = ${sg(r.ah)}`)}${vdim(186, yc, y2, `ch = ${sg(r.ch)}`)}
+  </svg><figcaption>地震時：等分布 w と天井位置の集中荷重 P</figcaption></figure>`;
+}
+function figSection(r){
+  if (r.stud.tube) {
+    const s = r.stud, d = s.depth * 1.1, b = s.width * 1.1, x0 = 80, y0 = 18;
+    return `<figure><svg viewBox="0 0 250 ${d + 44}" role="img" aria-label="角パイプ断面">
+      <rect x="${x0 - 14}" y="${y0 - 7}" width="${b + 28}" height="5" class="mut" fill="currentColor" opacity=".45"/>
+      <rect x="${x0 - 14}" y="${y0 + d + 2}" width="${b + 28}" height="5" class="mut" fill="currentColor" opacity=".45"/>
+      <rect x="${x0}" y="${y0}" width="${b}" height="${d}" rx="3" fill="none" stroke="currentColor" stroke-width="3.5" class="acc"/>
+      ${ln(x0 - 24, y0 + d / 2, x0 + b + 30, y0 + d / 2, 'mut', 'stroke-dasharray="5 3"')}${tx(x0 + b + 32, y0 + d / 2 + 4, 'x（強軸）', 't')}
+      ${arrow(30, y0 - 4, 30, y0 + 30, 'red', 2)}${tx(20, y0 + 46, '面外', 't')}
+      ${tx(x0 + b + 32, y0 - 2, '面材', 't')}
+    </svg><figcaption>角パイプ □-${s.dim}（平面）：長辺を壁厚方向に</figcaption></figure>`;
+  }
+  const s = r.stud, d = (s.size || parseFloat(s.dim)) * 1.25, b = 45 * 1.25, lip = 12, x0 = 70, y0 = 75 - d / 2;
+  const path = `M${x0 + b},${y0 + lip} L${x0 + b},${y0} L${x0},${y0} L${x0},${y0 + d} L${x0 + b},${y0 + d} L${x0 + b},${y0 + d - lip}`;
+  const cy = y0 + d / 2, cx = x0 + 18;
+  return `<figure><svg viewBox="0 0 250 ${d + 44}" role="img" aria-label="スタッド断面">${DEFS}
+    <g transform="translate(0,${22 - y0 + 4})">
+    <rect x="${x0 - 14}" y="${y0 - 7}" width="${b + 28}" height="5" class="mut" fill="currentColor" opacity=".45"/>
+    <rect x="${x0 - 14}" y="${y0 + d + 2}" width="${b + 28}" height="5" class="mut" fill="currentColor" opacity=".45"/>
+    <path d="${path}" fill="none" stroke="currentColor" stroke-width="3" class="acc"/>
+    ${ln(x0 - 24, cy, x0 + b + 30, cy, 'mut', 'stroke-dasharray="5 3"')}${tx(x0 + b + 32, cy + 4, 'x（強軸）', 't')}
+    ${ln(cx, y0 - 16, cx, y0 + d + 14, 'mut', 'stroke-dasharray="5 3"')}${tx(cx + 4, y0 - 18, 'y（弱軸）', 't')}
+    <g class="red">${arrow(22, y0 - 4, 22, y0 + 30, 'red', 2)}</g>${tx(12, y0 + 46, '面外', 't')}
+    ${tx(x0 + b + 32, y0 - 2, '面材', 't')}
+    </g></svg><figcaption>断面（平面）${s.dim}：曲げは x 軸まわり</figcaption></figure>`;
+}
+
+function renderWall(r){
+  const s = r.stud;
+  return `<div class="card">
+    <div class="sec"><h3>荷重</h3>${weightRows(r)}</div>
+    ${propsBlock(r)}
+    <div class="sec"><h3>① 軸力の検討 <small>長期</small></h3>
+      <div class="fig">${figWallLong(r)}</div>
+      ${row('座屈長さ <small>Lk</small>', r.ax.byLb ? '弱軸・フレドメ間隔' : '壁高', fx(r.ax.len, 1), 'cm')}
+      ${lambdaJudge(r, 'L')}
+      ${row('長期許容圧縮応力度 <small>fc</small>', fcExpr(r), fx(r.fcl, 1), 'kg/cm²')}
+      ${row('1本あたりの耐力 <small>Pa = fc × A</small>', `${fx(r.fcl, 1)} × ${s.A}`, fx(r.Pa, 1), 'kg')}
+      ${row('1本にかかる荷重 <small>P = w × L × a</small>', `${sg(r.w)} × ${sg(r.H)} × ${sg(r.a)}`, fx(r.P, 2), 'kg')}
+      ${judge('判定 P / Pa', fx(r.ratio1, 3), '≦ 1', r.ratio1, r.ok1, `${fx(r.P, 2)} / ${fx(r.Pa, 1)}`)}
+    </div>
+    <div class="sec"><h3>② 地震時の検討 <small>短期</small></h3>
+      <div class="fig">${figWallQuake(r)}</div>
+      ${row('設計震度 <small>k</small>', '', sg(r.k), 'G')}
+      ${row('短期許容曲げ応力度 <small>fb</small>', '', sg(r.fb), 'kg/cm²')}
+      ${row('最大曲げモーメント <small>M = k・w・a・L² / 8</small>', `${sg(r.k)} × ${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)}² / 8`, fx(r.M, 1), 'kg・cm')}
+      ${judge('判定 M / Z / fb + P / Pa / 1.5', fx(r.combined, 3), '≦ 1', r.combined, r.ok2, `${fx(r.M, 1)} / ${s.Zx} / ${sg(r.fb)} + ${fx(r.P, 2)} / ${fx(r.Pa, 1)} / 1.5<br>曲げ ${fx(r.bend, 3)} ＋ 軸力 ${fx(r.axial, 3)}`)}
+    </div>
+    ${deflBlock(r, 'L',
+      row('地震時の分布荷重 <small>w\' = k・w・a</small>', `${sg(r.k)} × ${sg(r.w)} × ${sg(r.a)}`, sg(r.wd), 'kg/cm') +
+      row('たわみ <small>δ = 5w\'L⁴ / (384EI)</small>', `5 × ${sg(r.wd)} × ${sg(r.H)}⁴ / (384 × ${sg(r.E)} × ${s.Ix})`, fx(r.delta, 3), 'cm'))}
+  </div>` + guideBlock(r);
+}
+
+function renderCeiling(r){
+  const s = r.stud;
+  return `<div class="card">
+    <div class="sec"><h3>条件</h3><p class="hint">地震時に天井からの慣性力を受ける壁の強度を検討します。天井からの荷重、壁重量ともにスタッドのみで負担するものとします。</p>
+      <div class="fig">${figCeilElev(r)}${figCeilModel(r)}</div></div>
+    <div class="sec"><h3>荷重</h3>${weightRows(r)}
+      ${row('天井重量 <small>Wc</small>', `${sg(r.Wc)} / 10000`, sg(r.wc), 'kg/cm²')}
+      ${row('天井面より上の高さ <small>ah = H − ch</small>', `${sg(r.H)} − ${sg(r.ch)}`, fx(r.ah, 1), 'cm')}
+    </div>
+    ${propsBlock(r)}
+    <div class="sec"><h3>許容応力度</h3>
+      ${row('座屈長さ <small>Hk</small>', r.ax.byLb ? '弱軸・フレドメ間隔' : '壁高', fx(r.ax.len, 1), 'cm')}
+      ${lambdaJudge(r, 'H')}
+      ${row('長期許容圧縮応力度 <small>fcl</small>', fcExpr(r), fx(r.fcl, 2), 'kg/cm²')}
+      ${row('短期許容圧縮応力度 <small>fc = fcl × 1.5</small>', `${fx(r.fcl, 2)} × 1.5`, fx(r.fcs, 2), 'kg/cm²')}
+      ${row('短期許容曲げ応力度 <small>fb</small>', '', sg(r.fb), 'kg/cm²')}
+    </div>
+    <div class="sec"><h3>長期荷重時</h3>
+      ${row('スタッドの軸力 <small>Nl = W・p・H + Wc・p・L/2</small>', `${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)} + ${sg(r.wc)} × ${sg(r.a)} × ${sg(r.Lc)} / 2`, fx(r.Nl, 2), 'kg')}
+      ${row('軸応力度 <small>σcl = Nl / A</small>', `${fx(r.Nl, 2)} / ${s.A}`, fx(r.sigCl, 2), 'kg/cm²')}
+      ${judge('判定 σcl / fcl', fx(r.ratioL, 3), '≦ 1', r.ratioL, r.okL, `${fx(r.sigCl, 2)} / ${fx(r.fcl, 2)}`)}
+    </div>
+    <div class="sec"><h3>短期荷重時（地震時）</h3>
+      ${row('設計震度 <small>kh / kv</small>', '', `${sg(r.kh)} / ${sg(r.kv)}`, 'G')}
+      ${row('壁の等分布荷重 <small>w = W・p・kh</small>', `${sg(r.W / 10000)} × ${sg(r.a)} × ${sg(r.kh)}`, sg(r.wh), 'kg/cm')}
+      ${row('天井から受ける慣性力 <small>P = Wc・L・p・kh</small>', `${sg(r.wc)} × ${sg(r.Lc)} × ${sg(r.a)} × ${sg(r.kh)}`, fx(r.P, 3), 'kg')}
+      ${row('軸力 <small>N = Nl × (kv + 1)</small>', `${fx(r.Nl, 2)} × ${sg(r.kv + 1)}`, fx(r.N, 2), 'kg')}
+      ${row('軸応力度 <small>σc = N / A</small>', `${fx(r.N, 2)} / ${s.A}`, fx(r.sigC, 2), 'kg/cm²')}
+      ${row('曲げモーメント <small>M1 = w・H² / 8</small>', `${sg(r.wh)} × ${sg(r.H)}² / 8`, fx(r.M1, 1), 'kg・cm')}
+      ${row('曲げモーメント <small>M2 = P・ah・ch / H</small>', `${fx(r.P, 3)} × ${sg(r.ah)} × ${sg(r.ch)} / ${sg(r.H)}`, fx(r.M2, 1), 'kg・cm')}
+      ${row('合計 <small>M = M1 + M2、σb = M / Z</small>', `${fx(r.M, 1)} / ${s.Zx}`, `${fx(r.M, 1)} → ${fx(r.sigB, 1)}`, 'kg・cm → kg/cm²')}
+      ${judge('判定 σc / fc + σb / fb', fx(r.ratioS, 3), '≦ 1', r.ratioS, r.okS, `${fx(r.sigC, 2)} / ${fx(r.fcs, 2)} + ${fx(r.sigB, 1)} / ${sg(r.fb)}`)}
+    </div>
+    ${deflBlock(r, 'H',
+      row('壁分のたわみ <small>5wH⁴ / (384EI)</small>', '', fx(r.d1, 3), 'cm') +
+      row('天井荷重分のたわみ <small>P・b・√[{(H² − b²)/3}³] / (3EIH)</small>', `b = min(ch, ah) = ${sg(r.bP)} cm（荷重点から近い方の支点まで）${r.bP !== r.ch ? `<br>関包計算書の式（b = ch）では ${fx(r.d2Kanpo, 3)} cm` : ''}`, fx(r.d2, 3), 'cm') +
+      row('合計 <small>δ</small>', '', fx(r.delta, 3), 'cm'))}
+  </div>` + guideBlock(r);
+}
+
+const SI = v => fx(v * 0.0980665, 1);   // kgf/cm² → N/mm²
+function premises(r){
+  const list = [
+    r.stud.tube ? `基準強度 F = ${sg(r.F)} kg/cm²（STKR400）。` : `基準強度 F = ${sg(r.F)} kg/cm²（${SI(r.F)} N/mm²）は関包スチール計算書の採用値です。スタッドの素材（JIS G 3302 SGCC）には降伏点の規格値がなく、告示の基準強度ではありません。`,
+    `短期許容曲げ応力度 fb = ${sg(r.fb)} kg/cm² は、面材がフランジに留め付けられて横座屈が起きないこと、板厚0.8mmの局部座屈を考えないことが前提です（メーカー計算書と同じ扱い）。`,
+    `断面性能はメーカーごとに異なります（例：WS-65 JIS の Ix は関包 10.58、三洋 10.06 cm⁴）。実際に使う製品の値を選んでください。`,
+    `面材重量はこのスタッドが支える全面材です（両面張りは両面分、千鳥・片面張りは片側分）。`
+  ];
+  if (r.ax.auto && r.ax.cand.length === 1 && r.ax.axis === 'y')
+    list.push('フレドメ無（千鳥など）で面材が片側フランジだけの場合、反対側フランジの横座屈は検討していません。');
+  if (r.mode === 'ceiling')
+    list.push('M1（中央最大）と M2（荷重点最大）、δ1 と δ2 は最大値どうしを足しています（安全側）。天井の水平力は奥行 L 全部、鉛直力は L/2 を見込んでいます（関包計算書と同じ）。');
+  if (r.stud.tube) list.push('角パイプ（STKR400）は告示の基準強度 F = 235 N/mm²（2400 kg/cm²）を使い、閉断面のため fb = F としています。上下端の固定（溶接・ボルト・ブラケット）と、面材の留め付け方法は別途検討が必要です。');
+  if (r.fcIsManual) list.push('fc は手入力値です。');
+  return list;
+}
+function altBlock(){
+  const A = alternatives(state);
+  if (!A) return '';
+  const fails = [];
+  const b = A.base;
+  if (!b.lenOk) fails.push(`部材長さ ${sg(b.H / 100)} m > 規定 ${sg(b.lenMax / 100)} m`);
+  if (!b.lambdaOk) fails.push(`細長比 λ = ${fx(b.lambda, 1)} > 250`);
+  if (b.mode === 'wall') { if (!b.ok1) fails.push(`軸力 P/Pa = ${fx(b.ratio1, 3)}`); if (!b.ok2) fails.push(`地震時 ${fx(b.combined, 3)}`); }
+  else { if (!b.okL) fails.push(`長期 ${fx(b.ratioL, 3)}`); if (!b.okS) fails.push(`地震時 ${fx(b.ratioS, 3)}`); }
+  const circ = ['', '①', '②', '③', '④', '⑤', '⑥'];
+  const vals = r => { const v1 = r.mode === 'wall' ? r.ratio1 : r.ratioL, v2 = r.mode === 'wall' ? r.combined : r.ratioS;
+    return `λ ${fx(r.lambda, 0)}　軸力 ${fx(v1, 3)}　地震時 ${fx(v2, 3)}　たわみ ${ratioText(r.deflRatio)}`; };
+  const item = (o, i) => {
+    const head = `<b>${circ[o.no]} ${o.title}</b>${A.best === o ? ' <span class="tag">推奨</span>' : ''}`;
+    if (o.none) return `<div class="alt none"><div>${head}<p class="hint">${o.none}</p></div></div>`;
+    if (o.kind === 'portal') {
+      const c = o.portal, sr = c.studR;
+      return `<div class="alt"><div>${head}<p class="hint">${o.detail}</p>
+        <p class="alt-v">中のスタッド（スパン ${sgc(c.span)} cm）：${vals(sr)}<br>
+        横材 □-${c.tube.dim} スパン ${c.S} mm：短期 ${fx(c.beamS, 3)}　長期 ${fx(c.beamL, 3)}　たわみ ${ratioText(c.beamDefl)}<br>
+        縦材 □-${c.tube.dim} 高さ ${sgc(num(state.L))} cm：短期 ${fx(c.postS, 3)}　λ ${fx(c.lamP, 0)}　たわみ ${ratioText(c.postDefl)}<br>
+        壁全体の重量 ${fx(c.Wwall, 1)} kg/m²、横材の受ける水平力 ${fx(c.q, 3)} kg/cm</p></div></div>`;
+    }
+    return `<div class="alt"><div>${head}<p class="hint">${o.detail}</p><p class="alt-v">${vals(o.r)}</p></div>
+      <button type="button" class="btn primary alt-apply" data-i="${i}">この案で計算</button></div>`;
+  };
+  window.__alts = A.options;
+  const ng6 = A.allNg ? `<div class="alt none" style="border-color:var(--ng)"><div><b>⑥ 全て NG</b><p class="hint">①〜⑤のいずれでも OK になりません。鉄骨下地として構造設計者による個別検討が必要です。</p></div></div>` : '';
+  return `<div class="card" id="altCard"><div class="sec"><h3>NG の対策（優先順位）<small>部材幅は使用スタッド幅 ${sgc(studDepth(STUDS.find(x => x.id === state.studId)))} mm 以下</small></h3>
+    <p class="note" style="margin-top:8px">NG の項目：${fails.join('、')}</p>
+    <div class="alts">${A.options.map(item).join('')}${ng6}</div>
+    <p class="hint alt-note" style="margin-top:8px">①から順に検討し、最初に OK になった案を「推奨」としています。対策案は強度に加えて、地震時たわみ 1/100 以内と、部材長さ（スタッド・補強材 8.0m、P-100TW 9.0m、P-125TW 10.0m まで）も条件にしています（参考資料：桐井製作所 壁強度検討一覧）。「この案で計算」を押すと入力が切り替わります。④の門型は縦材・横材・中のスタッドをそれぞれ検討した結果です。</p></div></div>`;
+}
+function altText(){
+  const A = alternatives(state);
+  if (!A) return [];
+  const circ = ['', '①', '②', '③', '④', '⑤'];
+  const lines = A.options.map(o => {
+    if (o.none) return `${circ[o.no]} ${o.title}：${o.none}`;
+    if (o.kind === 'portal') { const c = o.portal; return `${circ[o.no]} ${o.title}：横材 短期 ${fx(c.beamS, 3)}、縦材 短期 ${fx(c.postS, 3)}、スタッド 地震時 ${fx(c.studR.mode === 'wall' ? c.studR.combined : c.studR.ratioS, 3)} → OK${A.best === o ? '（推奨）' : ''}`; }
+    return `${circ[o.no]} ${o.title}（${o.detail}）：${o.r.mode === 'wall' ? `軸力 ${fx(o.r.ratio1, 3)}、地震時 ${fx(o.r.combined, 3)}` : `長期 ${fx(o.r.ratioL, 3)}、地震時 ${fx(o.r.ratioS, 3)}`} → OK${A.best === o ? '（推奨）' : ''}`;
+  });
+  if (A.allNg) lines.push('⑥ 全て NG：鉄骨下地として個別検討が必要');
+  return ['', 'NG の対策（優先順位）'].concat(lines);
+}
+
+function premiseBlock(r){
+  return `<div class="card"><div class="sec"><h3>この計算の前提 <small>結果を渡すときに添えてください</small></h3><ul style="margin:8px 0 0;padding-left:20px;display:grid;gap:6px;font-size:13.5px">${premises(r).map(t => `<li>${t}</li>`).join('')}</ul></div></div>`;
+}
+
+function renderResults(r){
+  const box = $('results');
+  document.querySelectorAll('[aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+  if (!r.ok) {
+    r.errors.forEach(e => {
+      const el = $(e.field === 'stud' ? 'stud' : e.field);
+      if (el) el.setAttribute('aria-invalid', 'true');
+    });
+    box.innerHTML = `<div class="card err"><h2>入力を確認してください</h2><ul>${r.errors.map(e => `<li>${e.msg}</li>`).join('')}</ul></div>`;
+    return;
+  }
+  box.innerHTML = altBlock() + (r.mode === 'wall' ? renderWall(r) : renderCeiling(r)) + kiriiBlock(r) + premiseBlock(r);
+}
+
+function renderSummary(r){
+  if (!r.ok) { $('summary').innerHTML = '<div class="pill na"><small>状態</small><b>入力待ち</b></div>'; return; }
+  const tile = (label, val, ok, kind) =>
+    `<div class="tile ${kind === 'ref' ? 'ref' : (ok ? '' : 'ng')}"><small>${label}</small><b>${val}</b>${kind === 'ref' ? (ok ? '' : '<i>超過</i>') : `<i>${ok ? 'OK' : 'NG'}</i>`}</div>`;
+  const first = r.mode === 'wall'
+    ? tile('① 軸力 P/Pa', fx(r.ratio1, 3), r.ok1 && r.lambdaOk)
+    : tile('長期 σ/fcl', fx(r.ratioL, 3), r.okL && r.lambdaOk);
+  const second = r.mode === 'wall' ? tile('② 地震時', fx(r.combined, 3), r.ok2) : tile('地震時', fx(r.ratioS, 3), r.okS);
+  $('summary').innerHTML =
+    `<div class="pill ${r.overall ? '' : 'ng'}"><small>総合</small><b>${r.overall ? 'OK' : 'NG'}</b></div>` + first + second +
+    tile('たわみ', ratioText(r.deflRatio), r.deflOk, 'ref');
+}
+
+function summaryText(r){
+  if (!r.ok) return '入力に不備があります。';
+  const s = r.stud;
+  const head = [
+    r.mode === 'wall' ? '壁下地材強度検討' : '天井を受ける壁下地材強度検討（地震に対して）',
+    `日付：${state.date}`,
+    state.wallType ? `壁種：吉野石膏 ${WALLS.find(w => w.id === state.wallType).name}（${WALLS.find(w => w.id === state.wallType).cert}）` : '壁種：手入力',
+    `検討会社：${state.company || '—'}　検討メーカー：${state.maker || '—'}`,
+    `検討部材：${s.name}（${s.code}） ${s.dim}　A = ${s.A} cm²　I = ${s.Ix} cm⁴　Z = ${s.Zx} cm³（出典：${s.src}）`,
+    `フレドメ：${state.bracing}　細長比：${r.ax.cand.map(c => `${c.axis === 'x' ? '強軸' : '弱軸'} ${sg(c.len)}/${sg(c.i)} = ${fx(c.lambda, 1)}`).join('、')}`,
+    `ピッチ ${sg(r.a)} cm　壁高 ${sg(r.H)} cm`,
+    `F = ${sg(r.F)} kg/cm²（${SI(r.F)} N/mm²）　fb = ${sg(r.fb)} kg/cm²（${SI(r.fb)} N/mm²）　E = ${sg(r.E)} kg/cm²`,
+    `仕上材：${r.lw.items.map(it => `${it.label} ${sg(it.unit)}×${it.n}`).join(' + ')}${r.lw.ov && r.lw.ov.items.length ? ` + 増し貼り ${sg(r.lw.ov.per)}（${r.lw.ov.items.map(it => `${it.face === 'both' ? '両面' : it.face + '面'} ${it.label}${it.perSheet ? '×' + it.n : ''}`).join('、')}）` : ''} = ${fx(r.W1, 2)} kg/m²（${r.basis === 'kanpo' ? '関包計算書値' : '吉野カタログ値'}）　下地材 W2 = ${fx(r.W2, 2)}　W = ${fx(r.W, 2)} kg/m²`
+  ];
+  const fcLine = `fc = ${fx(r.fcl, 1)} kg/cm²${r.fcIsManual ? '（手入力）' : ''}`;
+  const body = r.mode === 'wall' ? [
+    `設計震度 k = ${sg(r.k)} G`, '',
+    '① 軸力の検討（長期）',
+    `λ = ${fx(r.lambda, 1)} ≦ ${LIMIT_LAMBDA} …${r.lambdaOk ? 'OK' : 'NG'}`,
+    `${fcLine}（${SI(r.fcl)} N/mm²）　Pa = ${fx(r.Pa, 1)} kg　P = ${fx(r.P, 2)} kg`,
+    `P / Pa = ${fx(r.ratio1, 3)} ≦ 1 …${r.ok1 ? 'OK' : 'NG'}`, '',
+    '② 地震時の検討（短期）',
+    `M = ${fx(r.M, 1)} kg・cm`,
+    `M/Z/fb + P/Pa/1.5 = ${fx(r.combined, 3)} ≦ 1 …${r.ok2 ? 'OK' : 'NG'}`
+  ] : [
+    `天井：Wc = ${sg(r.Wc)} kg/m²　天井の奥行 L = ${sg(r.Lc)} cm　ch = ${sg(r.ch)} cm　ah = ${fx(r.ah, 1)} cm　kh = ${sg(r.kh)}　kv = ${sg(r.kv)}`, '',
+    `λ = ${fx(r.lambda, 1)} ≦ ${LIMIT_LAMBDA} …${r.lambdaOk ? 'OK' : 'NG'}`,
+    `${fcLine.replace('fc', 'fcl')}　fc（短期）= ${fx(r.fcs, 1)} kg/cm²`, '',
+    '長期荷重時',
+    `Nl = ${fx(r.Nl, 2)} kg　σcl = ${fx(r.sigCl, 2)} kg/cm²　σcl / fcl = ${fx(r.ratioL, 3)} ≦ 1 …${r.okL ? 'OK' : 'NG'}`, '',
+    '短期荷重時（地震時）',
+    `w = ${sg(r.wh)} kg/cm　P = ${fx(r.P, 3)} kg　M1 = ${fx(r.M1, 1)}　M2 = ${fx(r.M2, 1)}　M = ${fx(r.M, 1)} kg・cm`,
+    `σc / fc + σb / fb = ${fx(r.ratioS, 3)} ≦ 1 …${r.okS ? 'OK' : 'NG'}`
+  ];
+  const tail = ['', `たわみ（参考） δ = ${fx(r.delta, 3)} cm　${r.mode === 'wall' ? 'L' : 'H'}/δ = ${ratioText(r.deflRatio)}（基準 1/${sg(r.den)}：${r.deflOk ? '範囲内' : '超過'}）`, `総合判定：${r.overall ? 'OK' : 'NG'}`].concat(altText(), ['', '前提'], premises(r).map(t => '・' + t));
+  return head.concat(body, tail).join('\n');
+}
+
+let current = null;
+function update(){
+  readInputs();
+  if (state.W2mode === 'auto') { const v = autoW2(num(state.a), STUDS.find(x => x.id === state.studId)); if (Number.isFinite(v)) { state.W2 = v; $('W2').value = v; } }
+  current = calc(state);
+  applyMode();
+  renderSummary(current);
+  renderResults(current);
+  const Hn = num(state.L);
+  $('LinM').textContent = Number.isFinite(Hn) ? '= ' + fx(Hn / 100, 2) + ' m' : '';
+  const chn = num(state.ch);
+  $('ahHint').textContent = (Number.isFinite(chn) && Number.isFinite(Hn)) ? `天井面より上の高さ ah = H − ch = ${fx(Hn - chn, 1)} cm` : '';
+  const sd = STUDS.find(x => x.id === state.studId);
+  $('studDim').textContent = sd ? `寸法 ${sd.dim}　A = ${sd.A}　I = ${sd.Ix}　Z = ${sd.Zx}　ix = ${sd.ix}　iy = ${sd.iy}${sd.tube ? '　材料 STKR400：F = fb = 2400 kg/cm²（詳細設定の F・fb より優先）' : ''}` : '';
+  if (sd) {
+    const ax = resolveAxis(sd, state.bracing, state.axis, num(state.L), num(state.Lb));
+    $('axisHint').textContent = Number.isFinite(ax.lambda) ? `→ ${ax.name} = ${ax.i} cm、座屈長さ ${sg(ax.len)} cm で λ = ${fx(ax.lambda, 1)}${ax.auto ? `（フレドメ${state.bracing}の自動選択）` : '（手動指定）'}` : '';
+    $('LbField').hidden = !(state.bracing !== '無' && state.axis === 'auto');
+  }
+  if (state.W2mode === 'auto') {
+    const st = STUDS.find(x => x.id === state.studId);
+    $('W2Hint').textContent = st && st.tube
+      ? `自動：角パイプ自重 ${st.W} kg/m ÷ ピッチ ＋ 受け材等 1.0 kg/m²。値を書き換えると手入力に切り替わります。`
+      : `自動：5 kg/m² × 30.3 / a（関包計算書の @303 で 5、千鳥@606 で 2.5 を基準にピッチで按分）。値を書き換えると手入力に切り替わります。`;
+  } else $('W2Hint').textContent = '手入力中。「ピッチから自動」でピッチに連動します。';
+  wallTypeHint();
+  {
+    const ov = overlayWeight(state);
+    $('overHint').textContent = !(state.over || []).length
+      ? 'ボード・ケイカル板の増し貼りや、石・タイル張り（kg/m²）を追加できます。A面・B面は壁の表と裏です。'
+      : ov.errors.length ? '' : `A面 ${fx(ov.A, 2)}、B面 ${fx(ov.B, 2)} kg/m² → 1本のスタッドが支える分 ${fx(ov.per, 2)} kg/m²（${ov.split ? '千鳥・ダブル・片側壁のため重い方の片面' : '共通配置のため両面の合計'}）。ケイカル板は 公称かさ密度×厚さ で計算。`;
+  }
+  const lw = layersWeight(state.layers, state.basis);
+  $('W1Hint').textContent = lw.errors.length ? '' : `W1 = ${fx(lw.W1, 2)} kg/m²`;
+  syncChips();
+  save();
+}
+
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) { /* 次の方法へ */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+function wireEvents(){
+  $('W2').addEventListener('input', () => { state.W2mode = 'manual'; });
+  $('wallType').addEventListener('change', e => applyWallType(e.target.value));
+  $('addOver').addEventListener('click', () => { if (!Array.isArray(state.over)) state.over = []; if (state.over.length < 8) { state.over.push({opt:'C:ケイカル板 0.8FK 6mm', n:1, kg:'', face:'A', note:''}); renderOver(); update(); } });
+  $('over').addEventListener('input', e => {
+    const el = e.target.closest('.ov'); if (!el) return; const o = state.over[Number(el.dataset.i)];
+    if (e.target.classList.contains('o-n')) o.n = e.target.value;
+    if (e.target.classList.contains('o-kg')) o.kg = e.target.value;
+    if (e.target.classList.contains('o-note')) o.note = e.target.value;
+    update();
+  });
+  $('over').addEventListener('change', e => {
+    const el = e.target.closest('.ov'); if (!el) return; const o = state.over[Number(el.dataset.i)];
+    if (e.target.classList.contains('o-opt')) { o.opt = e.target.value; renderOver(); }
+    if (e.target.classList.contains('o-face')) o.face = e.target.value;
+    update();
+  });
+  $('over').addEventListener('click', e => {
+    const d = e.target.closest('.o-del'); if (!d) return;
+    state.over.splice(Number(d.closest('.ov').dataset.i), 1); renderOver(); update();
+  });
+  FIELD_IDS.forEach(id => $(id).addEventListener('input', update));
+  document.querySelectorAll('.chips[data-for] .chip').forEach(c => c.addEventListener('click', () => {
+    $(c.parentElement.dataset.for).value = c.dataset.v; update();
+  }));
+  document.querySelectorAll('.chips[data-state] .chip').forEach(c => c.addEventListener('click', () => {
+    state[c.parentElement.dataset.state] = c.dataset.v; update();
+  }));
+  document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { state.mode = b.dataset.v; update(); }));
+  $('layers').addEventListener('input', e => {
+    const rowEl = e.target.closest('.layer'); if (!rowEl) return;
+    const l = state.layers[Number(rowEl.dataset.i)];
+    if (e.target.classList.contains('l-n')) l.n = e.target.value;
+    if (e.target.classList.contains('l-custom')) l.custom = e.target.value;
+    update();
+  });
+  $('layers').addEventListener('change', e => {
+    const rowEl = e.target.closest('.layer'); if (!rowEl) return;
+    if (e.target.classList.contains('l-id')) {
+      state.layers[Number(rowEl.dataset.i)].id = e.target.value;
+      delete state.layers[Number(rowEl.dataset.i)].note;
+      renderLayers(); update();
+    }
+  });
+  $('layers').addEventListener('click', e => {
+    const del = e.target.closest('.l-del'); if (!del) return;
+    if (state.layers.length > 1) { state.layers.splice(Number(del.closest('.layer').dataset.i), 1); renderLayers(); update(); }
+  });
+  $('addLayer').addEventListener('click', () => {
+    if (state.layers.length < 6) { state.layers.push({id:'GB-F 12.5mm', n:1, custom:''}); renderLayers(); update(); }
+  });
+  $('inputs').addEventListener('submit', e => e.preventDefault());
+  $('results').addEventListener('click', e => {
+    const b = e.target.closest('.alt-apply'); if (!b) return;
+    const o = (window.__alts || [])[Number(b.dataset.i)]; if (!o || !o.patch) return;
+    Object.assign(state, o.patch);
+    writeInputs(); update();
+    $('toast').textContent = '対策案を反映しました';
+    setTimeout(() => { $('toast').textContent = ''; }, 3000);
+    try { $('summaryBar').scrollIntoView({behavior:'smooth'}); } catch (err) { /* 無視 */ }
+  });
+  $('reset').addEventListener('click', () => {
+    state = Object.assign(clone(DEFAULTS), {date: todayStr()});
+    writeInputs(); $('copyBox').hidden = true; update();
+  });
+  $('copy').addEventListener('click', async () => {
+    const t = summaryText(current);
+    const ok = await copyText(t);
+    const box = $('copyBox');
+    if (ok) { box.hidden = true; $('toast').textContent = 'コピーしました'; }
+    else { box.value = t; box.hidden = false; box.focus(); box.select(); $('toast').textContent = '下の文字を選んでコピーしてください'; }
+    setTimeout(() => { $('toast').textContent = ''; }, 3000);
+  });
+  const tabs = ['calc','ref','cmp','data','notes'];
+  tabs.forEach(t => $('tab-' + t).addEventListener('click', () => {
+    tabs.forEach(u => { $('tab-' + u).setAttribute('aria-selected', String(u === t)); $('panel-' + u).hidden = u !== t; });
+    $('summaryBar').hidden = t !== 'calc';
+    if (t === 'cmp') buildCompare();
+    if (t === 'data') buildDataList();
+  }));
+}
+
+/* --- 資料タブ --- */
+const val = v => v == null ? '—' : v;
+function buildReference(){
+  const heads = ['名称','寸法 (mm)','質量 kg/m','A cm²','Ix cm⁴','Iy cm⁴','Zx cm³','Zy cm³','ix cm','iy cm','C1 cm','C2 cm','出典'];
+  const keys = ['W','A','Ix','Iy','Zx','Zy','ix','iy','C1','C2'];
+  $('refStud').innerHTML = `<h2>スタッド断面性能</h2><div class="scroll"><table><thead><tr>${heads.map((h, i) => `<th scope="col" ${i === 12 ? 'class="txt"' : ''}>${h}</th>`).join('')}</tr></thead><tbody>` +
+    STUDS.map(s => `<tr><td>${esc(s.name)}${s.calc ? `（${esc(s.code)}）` : ''}</td><td>${esc(s.dim)}</td>` +
+      keys.map(k => { const f = s.flag && s.flag[k]; return f ? `<td class="flag" title="${f}">${val(s[k])} ※</td>` : `<td>${val(s[k])}</td>`; }).join('') +
+      `<td class="txt">${esc(s.src)}</td></tr>`).join('') + `</tbody></table></div>
+    <p class="src">軽量スタッド（WS）、補強材（RC）、タワーウォール（P-TW）、角パイプを計算に使えます。補強材・タワーウォールは F = 2100 kg/cm²（軽量スタッドと同じ）で計算します。黄色の ※ は JIS 品の iy が資料になく、カタログ（一般品）の値を使っているセルです。同じ JIS 呼び寸法でもメーカーにより断面性能が最大5%ほど違います。<br>出典：関包スチール 建築用鋼製下地材カタログ P.21–22、関包スチール 壁下地材強度検討書（2024/6/7、2025/5/16）、第一金属製作所 建築用鋼製下地材カタログ、三洋工業 SICS JIS規格品（Web公表値）。</p>`;
+
+  $('refBoard').innerHTML = `<h2>せっこうボード面重量</h2><div class="scroll"><table style="min-width:600px"><thead><tr><th scope="col">名称</th><th scope="col">吉野カタログ kg/m²</th><th scope="col">関包計算書 kg/m²</th><th scope="col">1枚当たり kg</th><th scope="col" class="txt">サイズ</th></tr></thead><tbody>` +
+    BOARDS.map(b => {
+      const per = b.cat * sheetAreaM2(b);
+      return `<tr><td>${b.id}</td>${b.ok ? `<td>${b.cat}</td>` : `<td class="flag" title="吉野カタログに記載がなく、元の表の値です">${b.cat} ※</td>`}<td>${val(b.kanpo)}</td><td>${per.toFixed(1)}</td><td class="txt">${b.size}×1820</td></tr>`;
+    }).join('') + `</tbody></table></div>
+    <p class="src">黄色の ※ は吉野石膏カタログに面重量の記載がなく、元の表の値のままです。カタログの面重量は代表値で、規格値ではありません。<br>関包スチールの計算書には GW（グラスウール）1.2 kg/m² の例があります（面材欄の「その他」で入力）。<br>出典：吉野石膏 耐火遮音システムカタログ P.5（面重量）・P.14–15（サイズ）、関包スチール 壁下地材強度検討書。</p>`;
+
+  const sizes = [65, 75, 90, 100];
+  $('refGuide').innerHTML = `<h2>壁高さの目安（スタッドの選定）</h2><div class="scroll"><table style="min-width:560px"><thead><tr><th scope="col">壁構造</th>${sizes.map(s => `<th scope="col">${s}形</th>`).join('')}</tr></thead><tbody>` +
+    GUIDE_ROWS.map(g => `<tr><td>${g.name}</td>${sizes.map(s => `<td>${g.max[s] == null ? '—' : '≦ ' + g.max[s].toFixed(1) + ' m'}</td>`).join('')}</tr>`).join('') + `</tbody></table></div>
+    <p class="src">JIS 材（板厚0.8mm）の目安で、保証値ではありません。千鳥間柱などは「壁に 24.4kgf/m² が加わったとき、最大たわみ ≦ 壁高さ×1/240」を条件にした実験値です。JASS26 の行は振れ止めとスペーサーを所定の間隔で設置した場合で、5mを超える場合は別途検討とされています。<br>出典：吉野石膏 耐火遮音システムカタログ P.50。</p>`;
+
+  const tw = (name, spec, rows) => `<div class="scroll"><table style="min-width:560px"><thead><tr><th scope="col">${name}<br><span style="font-weight:400">${spec}</span></th><th scope="col">@455</th><th scope="col">@303</th><th scope="col">@227.5</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${r[0]}<br><span style="color:var(--muted);font-size:12px">${r[1]}</span></td>${r[2].map(h => `<td>${h.toFixed(1)} m</td>`).join('')}</tr>`).join('') + `</tbody></table></div>`;
+  $('refTall').innerHTML = `<h2>高壁システムの制限壁高さ（参考）</h2>
+    ${tw('オクジュー P-100TW', '100×45×10×1.0・1.64 kg/m・最大9m', [
+      ['GB-F t21+21 片面張り（Sウォール等）', '403N/m²（41.1kg/m²）', [7.0, 8.0, 9.0]],
+      ['GB-F t12.5+12.5 両面張り（S12等）', '468N/m²（47.8kg/m²）', [7.0, 8.0, 9.0]],
+      ['GB-F t15+15 両面張り（B15等）', '542N/m²（55.3kg/m²）', [6.5, 7.5, 8.5]],
+      ['GB-F t21+21 両面張り（A21等）', '727N/m²（74.2kg/m²）', [5.5, 6.5, 6.8]]
+    ])}
+    <div style="height:14px"></div>
+    ${tw('オクジュー P-125TW', '最大10m', [
+      ['GB-F t21+21 片面張り（Sウォール等）', '398N/m²（40.6kg/m²）', [7.5, 9.0, 10.0]],
+      ['GB-F t12.5+12.5 両面張り（S12等）', '464N/m²（47.4kg/m²）', [7.3, 8.8, 10.0]],
+      ['GB-F t15+15 両面張り（B15等）', '538N/m²（54.9kg/m²）', [6.8, 8.0, 9.3]],
+      ['GB-F t21+21 両面張り（A21等）', '723N/m²（73.8kg/m²）', [5.8, 7.0, 8.0]]
+    ])}
+    <p class="src">自重座屈＋側圧125kg/m、水平1G 対応時の目安。曲げ許容強度の90%程度を限界とし、スラブ to スラブ固定、胴縁 @1200 が条件です。現場の条件により強度検討が必要で、断面性能は資料に記載がないため、このアプリでは計算できません。<br>出典：オクジュー P-100TW・P-125TW リーフレット、施工要領書（水平荷重1G／自重座屈＋側圧）。</p>
+    <h2 style="margin-top:22px">関包スチール タフBOX（参考）</h2>
+    <div class="scroll"><table style="min-width:560px"><thead><tr><th scope="col">条件</th><th scope="col">面材構成</th><th scope="col">@227.5</th><th scope="col">@303</th></tr></thead><tbody>
+      <tr><td class="txt" rowspan="3">水平1G地震時<br>（L/200以内）</td><td class="txt">GB-F t21×2 片面</td><td>7.25 m</td><td>6.80 m</td></tr>
+      <tr><td class="txt">GB-F t12.5×2 両面</td><td>7.00 m</td><td>6.50 m</td></tr>
+      <tr><td class="txt">GB-F t21×2 + GB-R t12.5</td><td>6.85 m</td><td>6.40 m</td></tr>
+      <tr><td class="txt" rowspan="3">倉庫業法 2500N/m²</td><td class="txt">GB-F t21×2 片面</td><td>8.0 m</td><td>—</td></tr>
+      <tr><td class="txt">GB-F t12.5×2 両面</td><td>7.5 m</td><td>—</td></tr>
+      <tr><td class="txt">GB-F t21×2 + GB-R t12.5</td><td>7.0 m</td><td>—</td></tr>
+      <tr><td class="txt">ガス消火圧 1000Pa<br>（L/200以内）</td><td class="txt">上記3種のいずれも</td><td>5.70 m</td><td>5.20 m</td></tr>
+    </tbody></table></div>
+    <p class="src">BOXスタッド □-90×89×1.2、振れ止め不要、下地幅90mm。建材試験センターでユニット実証試験を実施済み（試験報告書は準備中）。<br>出典：関包スチール タフBOX工法リーフレット（2026.9.24）。</p>`;
+}
+
+/* --- 前提・修正点（検証値は実際の計算で表示） --- */
+function verification(){
+  const base = {mode:'wall', studId:'WS-65J', bracing:'無', axis:'auto', basis:'kanpo', k:1, fb:2100, E:2100000, F:2100, fcManual:'', deflDen:200, Lb:120, W2mode:'manual'};
+  const A = calc(Object.assign({}, base, {a:60.6, L:353, W2:2.5,
+    layers:[{id:'GB-F 21mm', n:1}, {id:'GB-R-H(スーパー) 9.5mm', n:1}, {id:CUSTOM_ID, n:1, custom:1.2}]}));
+  const B = calc(Object.assign({}, base, {studId:'WS-100J', bracing:'有', a:30.3, L:600, W2:5, layers:[{id:'GB-F 21mm', n:2}]}));
+  const ceil = Object.assign({}, base, {mode:'ceiling', a:60.6, L:365, W2:2.5, kh:0.6, kv:0, layers:[{id:'GB-F 21mm', n:1}, {id:'GB-R-H(スーパー) 9.5mm', n:1}]});
+  const C = calc(Object.assign({}, ceil, {ch:210, Lc:270, Wc:12.2}));
+  const D = calc(Object.assign({}, ceil, {ch:230, Lc:200, Wc:21.6}));
+  return {A, B, C, D};
+}
+function buildNotes(){
+  const v = verification();
+  const cmp = (label, pdf, app) => `<span>${label}</span><span>${pdf}</span><span>${app}</span>`;
+  const head = '<span class="h">項目</span><span class="h">計算書</span><span class="h">このアプリ</span>';
+  $('notes').innerHTML = `
+    <h2>精査で直した点（第3版）</h2>
+    <ul>
+      <li><b>天井荷重によるたわみ式を修正。</b>集中荷重の最大たわみ δ = P・b・{(H² − b²)/3}^1.5 / (3EIH) の b は「荷重点から近い方の支点までの距離」です。関包計算書は b = ch（床から天井面）に固定しており、天井面が壁高の半分より上（ch > H/2）では過小評価になります。数値積分で確かめると ch = 300、H = 365 で約10%小さく出ます。b = min(ch, ah) に直しました。計算書の2件は ch ≒ H/2 付近のため差は0.1〜0.6%です。</li>
+      <li><b>フレドメ有のときの細長比を修正。</b>強軸 L/ix だけでなく、弱軸 Lb/iy（Lb = フレドメ間隔、標準120cm）も計算して大きい方を使います。通常は強軸側で決まり結果は変わりませんが、フレドメ間隔を広げた場合の見落としを防ぎます。</li>
+      <li><b>面材重量の入力の意味を修正。</b>前版の「片面の面材構成」は誤りでした。スタッドが支える全部の面材です（両面張りは両面分、千鳥・片面張りは片側分）。初期値は GB-R 12.5mm 両面各1枚（計2枚）にしました。</li>
+      <li><b>π を正確な値に。</b>計算書は π = 3.14（Λ = 128.19）、このアプリは正確な π（Λ = 128.26）です。λ > Λ の範囲で fc が約0.1%大きくなります。</li>
+      <li><b>断面性能の出典を追加。</b>同じ WS-65 JIS でも、関包・第一金属は Ix = 10.56〜10.58、三洋工業は 10.06 cm⁴ と約5%違います。三洋工業の公表値を選べるようにし、WS-65 JIS の Iy・Zy は第一金属の同値品で補いました。</li>
+      <li><b>前提を結果に明記。</b>F の根拠、fb = F の条件、局部座屈を考えていないことなどを、計算結果とコピー文に付けるようにしました。</li>
+    </ul>
+    <h2>精査して正しいと確認した点</h2>
+    <ul>
+      <li>fc の式（λ ≦ Λ：(1 − 0.4(λ/Λ)²)F/ν、ν = 3/2 + 2/3(λ/Λ)²、λ > Λ：0.277F/(λ/Λ)²、Λ = π√(E/0.6F)）は日本建築学会「鋼構造許容応力度設計規準」の式と同じです。0.277 はオイラー座屈応力度を安全率 2.17 で割った値です。境界 λ = Λ で両式がつながることも確認しました。</li>
+      <li>壁のみ：P = w・L・a、M = k・w・a・L²/8（単純支持・等分布）、δ = 5wL⁴/(384EI)、短期の組合せ M/Z/fb + P/(1.5Pa) ≦ 1。</li>
+      <li>天井を受ける壁：M2 = P・ah・ch/H（集中荷重点の曲げモーメント）、Nl、σc/fc + σb/fb ≦ 1。</li>
+      <li>関包カタログの断面性能は Zx = Ix/C2、ix = √(Ix/A)、iy = √(Iy/A)、Zy = Iy/(B − C1) で全行が整合しています。</li>
+      <li>λ ≦ 250 は建築基準法施行令第65条の「柱以外の圧縮材」の上限を準用したものです（スタッドは構造耐力上主要な部分ではありません）。</li>
+    </ul>
+    <h2>直せないため前提として明記した点</h2>
+    <ul>
+      <li><b>F = 2100 kg/cm²（206 N/mm²）の根拠。</b>スタッドの素材は JIS G 3302 SGCC で、降伏点の規格値がなく告示の基準強度もありません。2100 は関包スチールの採用値です。根拠を求められたらメーカーへの確認が必要です。</li>
+      <li><b>局部座屈と横座屈。</b>板厚0.8mm のウェブ・フランジは幅厚比が大きく、鋼構造規準どおりなら有効断面の低減が必要です。業界の計算書（メーカー各社）は面材の拘束を前提に全断面・fb = F で扱っており、このアプリも同じです。</li>
+      <li><b>E = 2.1×10⁶ kg/cm²。</b>SI の 2.05×10⁵ N/mm²（2.09×10⁶ kg/cm²）より0.5%大きく、たわみは0.5%小さく出ます。計算書に合わせていますが、詳細設定で変えられます。</li>
+    </ul>
+    <h2>関包スチール計算書との照合（実際に計算した値）</h2>
+    <p>4件の計算書の条件を入れて再計算した結果です。壁2件の差は表示の丸めや i の桁数による0.5%以内です。天井2件のたわみは上のたわみ式の修正分だけ大きくなります。</p>
+    <div class="check">
+      <span class="d">壁下地材強度検討 2024/6/7（4〜6階、WS-65 JIS、千鳥、L=353）</span>${head}
+      ${cmp('λ', '203', fx(v.A.lambda, 1))}${cmp('fc', '233', fx(v.A.fcl, 1))}${cmp('P/Pa', '0.204', fx(v.A.ratio1, 3))}
+      ${cmp('地震時', '0.577', fx(v.A.combined, 3))}${cmp('δ', '1.76 cm', fx(v.A.delta, 2) + ' cm')}
+      <span class="d">壁下地材強度検討 2025/5/16（WS-100 JIS、L=600）</span>${head}
+      ${cmp('λ', '149', fx(v.B.lambda, 1))}${cmp('fc', '434', fx(v.B.fcl, 1))}${cmp('P/Pa', '0.094', fx(v.B.ratio1, 3))}
+      ${cmp('地震時', '0.508', fx(v.B.combined, 3))}${cmp('δ', '3.34 cm', fx(v.B.delta, 2) + ' cm')}
+      <span class="d">天井を受ける壁 2024/8/26（ch2.1、天井の奥行270）</span>${head}
+      ${cmp('σcl/fcl', '0.2490', fx(v.C.ratioL, 4))}${cmp('地震時', '0.5949', fx(v.C.ratioS, 4))}
+      ${cmp('δ（計算書の式）', '1.6905 cm', fx(v.C.deltaKanpo, 4) + ' cm')}${cmp('δ（修正後）', '—', fx(v.C.delta, 4) + ' cm')}
+      <span class="d">天井を受ける壁 2024/8/22（ch2.3、天井の奥行200）</span>${head}
+      ${cmp('σcl/fcl', '0.2589', fx(v.D.ratioL, 4))}${cmp('地震時', '0.6408', fx(v.D.ratioS, 4))}
+      ${cmp('δ（計算書の式）', '1.8117 cm', fx(v.D.deltaKanpo, 4) + ' cm')}${cmp('δ（修正後）', '—', fx(v.D.delta, 4) + ' cm')}
+    </div>
+    <h2>判定の基準</h2>
+    <ul><li>細長比 λ ≦ 250　／　P/Pa ≦ 1　／　M/Z/fb + P/Pa/1.5 ≦ 1（天井を受ける壁は σcl/fcl ≦ 1、σc/fc + σb/fb ≦ 1）。たわみは参考で、判定に含めません。</li></ul>
+    <p class="hint" style="margin-top:14px">入力値はこの端末のブラウザに自動保存されます。</p>`;
+}
+
+
+
+/* ---------- 桐井製作所 検討一覧との照合（結果欄・PDF に入る） ---------- */
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function kiriiBlock(r){
+  const m = kiriiMatch(state, r);
+  if (!m.row) return '';
+  const k = m.row, p = Math.abs(r.a - 45.5) < 1 ? 0 : Math.abs(r.a - 30.3) < 1 ? 1 : Math.abs(r.a - 22.75) < 1 ? 2 : -1;
+  const cell = (arr, i) => arr[i] == null ? '—' : sg(arr[i] / 1000) + ' m';
+  const line = (label, arr) => `<tr><td class="txt">${label}</td>${[0, 1, 2].map(i => `<td${i === p ? ' style="font-weight:700"' : ''}>${cell(arr, i)}</td>`).join('')}</tr>`;
+  const cmp = (arr, label) => p >= 0 && arr[p] != null ? `${label}：桐井の限界高さ ${sg(arr[p] / 1000)} m に対し壁高 ${sg(r.H / 100)} m → ${r.H * 10 <= arr[p] ? '範囲内' : '超過'}` : '';
+  const sz = studDepth(r.stud);
+  const notes = [sz === 100 && (r.stud.group === 'JIS' || r.stud.group === 'CAT' || r.stud.group === 'SANYO') ? cmp(k.lgs, 'スタッド100形') : '',
+    r.stud.group === 'TW' && r.stud.id === 'TW-100' ? cmp(k.tw, 'タワーウォール100') : '',
+    /100×50×20/.test(r.stud.dim) && r.stud.group === 'RC' ? cmp(k.c100, '補強材 C-100') : ''].filter(Boolean);
+  return `<div class="card"><div class="sec"><h3>桐井製作所 検討一覧との照合 <small>参考・判定に含めない</small></h3>
+    <p class="hint" style="margin:8px 0">壁全体の重量 ${fx(m.Ww, 1)} kg/m² に対し、桐井の一覧で${m.exact ? '同等以上の重さ' : '最も重い'}の壁種「${esc(k.no)} ${esc(k.name)}」（${k.kg} kg/m²、下地 ${esc(k.base)}）の限界高さです。条件は地震時 1.0G・たわみ 1/100、側圧・たわみ 1/200、桐井製作所の製品です。</p>
+    <div class="scroll"><table style="min-width:420px"><thead><tr><th scope="col">100形部材</th><th scope="col">@455</th><th scope="col">@303</th><th scope="col">@227.5</th></tr></thead><tbody>
+    ${line('スタッド LGS100', k.lgs)}${line('タワーウォール100', k.tw)}${line('補強材 C-100×1.6', k.c100)}</tbody></table></div>
+    ${notes.length ? `<p class="note">${notes.join('<br>')}</p>` : ''}</div></div>`;
+}
+
+/* ---------- メーカー比較タブ ---------- */
+function sameSizeSet(size){
+  const pick = (pred) => STUDS.filter(s => s.calc && !s.tube && studDepth(s) === size && pred(s));
+  return [
+    ...(pick(s => s.group === 'JIS').length ? pick(s => s.group === 'JIS') : pick(s => s.group === 'CAT')), ...pick(s => s.group === 'SANYO'),
+    ...pick(s => s.maker === '桐井製作所' && s.group !== 'RC' && s.group !== 'USER'), ...pick(s => s.group === 'USER' && (s.kind || 'stud') === 'stud')
+  ];
+}
+function buildCompare(){
+  const cur = STUDS.find(x => x.id === state.studId);
+  const size = studDepth(cur);
+  const r0 = calc(state);
+  const head = `<h2>現在の条件で各社のスタッドを比較</h2>
+    <p class="hint" style="margin-bottom:10px">壁高 ${sg(num(state.L) / 100)} m、ピッチ @${sg(num(state.a) * 10)}、フレドメ${state.bracing}、${r0.ok ? `壁の荷重 W = ${fx(r0.W, 1)} kg/m²` : '入力に不備があります'}。幅 ${sg(size)} mm の各社スタッドで計算し直した結果です。限界高さは、この条件で壁高だけを変えたときに強度（と、たわみ 1/100）が OK になる最大の高さです。部材長さのメーカー規定（スタッド・補強材 8.0m など）は別途確認してください。</p>`;
+  const set = sameSizeSet(size);
+  if (!r0.ok || !set.length) { $('cmpNow').innerHTML = head + '<p class="hint">比較できる部材がありません。</p>'; }
+  else {
+    const rows = set.map(s => {
+      const r = calc(Object.assign({}, state, {studId: s.id}));
+      const hS = maxHeight(state, s.id), hD = maxHeight(state, s.id, 100);
+      const v1 = r.mode === 'wall' ? r.ratio1 : r.ratioL, v2 = r.mode === 'wall' ? r.combined : r.ratioS;
+      return `<tr${s.id === state.studId ? ' style="font-weight:700"' : ''}><td>${esc(s.maker)}<br><span style="font-weight:400;color:var(--muted);font-size:12px">${esc(s.name)} ${esc(s.dim)}</span></td>
+        <td>${s.A}</td><td>${s.Ix}</td><td>${s.Zx}</td><td>${r.ok ? fx(r.lambda, 0) : '—'}</td><td>${r.ok ? fx(v1, 3) : '—'}</td><td>${r.ok ? fx(v2, 3) : '—'}</td>
+        <td>${r.ok ? ratioText(r.deflRatio) : '—'}</td><td>${r.ok ? (r.overall ? 'OK' : 'NG') : '—'}</td><td>${sg(hS / 100)} m</td><td>${sg(hD / 100)} m</td></tr>`;
+    }).join('');
+    const kiriiStud = set.some(s => s.maker === '桐井製作所' && /WS|スタッド/.test(s.name));
+    $('cmpNow').innerHTML = head + `<div class="scroll"><table style="min-width:860px"><thead><tr><th scope="col">メーカー・部材</th><th scope="col">A cm²</th><th scope="col">Ix cm⁴</th><th scope="col">Zx cm³</th><th scope="col">λ</th><th scope="col">軸力</th><th scope="col">地震時</th><th scope="col">たわみ</th><th scope="col">判定</th><th scope="col">限界高さ 強度</th><th scope="col">強度＋たわみ1/100</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${kiriiStud ? '' : `<p class="note">桐井製作所の JIS スタッド（WS 形）の断面性能は Web で公表された数値を取得できませんでした（カタログ PDF は取得不可）。「データ登録」タブで桐井カタログの値を登録すると、この表に自動で加わります。</p>`}`;
+  }
+  // サイズ別
+  const sizes = [50, 65, 75, 90, 100];
+  const kanpo = s => s.group === 'JIS' || (s.group === 'CAT' && !STUDS.some(x => x.group === 'JIS' && x.size === s.size));
+  const makers = [['関包スチール', kanpo], ['三洋工業 JIS', s => s.group === 'SANYO'], ['桐井製作所', s => s.maker === '桐井製作所' && s.group !== 'RC' && s.group !== 'USER'], ['登録データ', s => s.group === 'USER' && (s.kind || 'stud') === 'stud']];
+  const base = sz => STUDS.find(s => s.group === 'JIS' && s.size === sz) || STUDS.find(s => s.group === 'CAT' && s.size === sz);
+  const cellOf = (pred, sz) => {
+    const list = STUDS.filter(s => s.calc && !s.tube && s.size === sz && pred(s));
+    if (!list.length) return '<td class="txt" style="color:var(--muted)">—</td>';
+    const b = base(sz);
+    return `<td>${list.map(s => `Ix ${s.Ix}${b && b !== s ? `（${fx((s.Ix / b.Ix - 1) * 100, 0)}%）` : ''}<br>Zx ${s.Zx}${b && b !== s ? `（${fx((s.Zx / b.Zx - 1) * 100, 0)}%）` : ''}${list.length > 1 ? `<br><span style="font-size:11px;color:var(--muted)">${esc(s.name)}</span>` : ''}`).join('<hr style="border:0;border-top:1px dashed var(--rule)">')}</td>`;
+  };
+  $('cmpSize').innerHTML = `<h2>サイズ別の断面性能（各社）</h2><div class="scroll"><table style="min-width:760px"><thead><tr><th scope="col">形</th>${makers.map(m => `<th scope="col">${m[0]}</th>`).join('')}</tr></thead><tbody>` +
+    sizes.map(sz => `<tr><td>${sz}形</td>${makers.map(m => cellOf(m[1], sz)).join('')}</tr>`).join('') +
+    `</tbody></table></div><p class="src">Ix cm⁴・Zx cm³。（ ）は関包スチールとの差。関包スチールは計算書の JIS 品の値（50・75・90形は JIS 品の値がないためカタログ値）。同じ JIS 寸法でもメーカーにより断面性能が違うため、実際に使う製品の値で検討してください。出典：関包スチール カタログ P.21–22・計算書、三洋工業 SICS JIS品、桐井製作所 鋼製下地カタログ 2026.7 断面性能一覧、登録データ。</p>`;
+  // 桐井 一覧
+  const m = r0.ok ? kiriiMatch(state, r0) : null;
+  $('cmpKirii').innerHTML = `<h2>桐井製作所 壁種毎 建込下地一覧（参考資料）</h2>
+    <p class="hint" style="margin-bottom:8px">地震時 1.0G・たわみ 1/100、側圧・たわみ 1/200 の限界高さ（m）。左から @455／@303／@227.5。${m ? `現在の壁（${fx(m.Ww, 1)} kg/m²）に当てはまる行を太字にしています。` : ''}</p>
+    <div class="scroll"><table style="min-width:820px"><thead><tr><th scope="col">壁種</th><th scope="col">kg/m²</th><th scope="col">下地</th><th scope="col" class="txt">スタッド LGS100</th><th scope="col" class="txt">タワーウォール100</th><th scope="col" class="txt">補強材 C-100×1.6</th></tr></thead><tbody>` +
+    KIRII_LIST.map(k => { const b = m && m.row === k; const f = a => a.map(v => v == null ? '—' : sg(v / 1000)).join(' / ');
+      return `<tr${b ? ' style="font-weight:700"' : ''}><td>${esc(k.no)} ${esc(k.name)}</td><td>${k.kg}</td><td class="txt">${esc(k.base)}</td><td class="txt">${f(k.lgs)}</td><td class="txt">${f(k.tw)}</td><td class="txt">${f(k.c100)}</td></tr>`; }).join('') +
+    `</tbody></table></div><p class="src">出典：壁種毎 建込下地一覧100分の1（2025.11.10 更新）、桐井製作所 壁強度検討一覧（2024.9.5）。部材は桐井製作所の製品で、長さはメーカー規格により 8.0m まで。</p>`;
+}
+
+/* ---------- データ登録タブ（db に保存して蓄積） ---------- */
+let dbApi = null, userRows = [];
+const LOCAL_KEY = 'kabeshitaji-makerdata-v1';
+const localStore = {
+  read(){ try { const v = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } },
+  write(rows){ try { localStorage.setItem(LOCAL_KEY, JSON.stringify(rows)); return true; } catch (e) { return false; } }
+};
+const D_KEYS = ['W','A','Ix','Iy','Zx','Zy','ix','iy'];
+function dataCheck(){
+  const g = id => num($(id).value);
+  const A = g('dA'), Ix = g('dIx'), Iy = g('dIy'), ix = g('dix'), iy = g('diy');
+  const msgs = [];
+  if (A > 0 && Ix > 0 && ix > 0) { const c = Math.sqrt(Ix / A); if (Math.abs(c - ix) / ix > 0.03) msgs.push(`ix の確認：√(Ix/A) = ${fx(c, 2)} と ${ix} が3%以上違います`); }
+  if (A > 0 && Iy > 0 && iy > 0) { const c = Math.sqrt(Iy / A); if (Math.abs(c - iy) / iy > 0.03) msgs.push(`iy の確認：√(Iy/A) = ${fx(c, 2)} と ${iy} が3%以上違います`); }
+  if (A > 0 && g('dW') > 0 && Math.abs(A * 0.785 - g('dW')) / g('dW') > 0.08) msgs.push(`W の確認：A×0.785 = ${fx(A * 0.785, 2)} kg/m と違います`);
+  $('dCheck').textContent = msgs.length ? '⚠ ' + msgs.join('／') : '';
+  return msgs;
+}
+function parsePaste(){
+  const t = $('dPaste').value.trim(); if (!t) return;
+  const parts = t.split(/[\t,，\s]+/).filter(Boolean);
+  const nums = [], words = [];
+  parts.forEach(p => { const v = Number(p.replace(/[^\d.\-]/g, '')); if (/^[\d.]+$/.test(p) && Number.isFinite(v)) nums.push(v); else words.push(p); });
+  const dim = words.find(w => /\d+×\d+/.test(w) || /\d+x\d+/i.test(w));
+  const name = words.filter(w => w !== dim).join(' ');
+  if (name) $('dName').value = name;
+  if (dim) { $('dDim').value = dim.replace(/x/gi, '×'); const d = parseFloat(dim.replace(/^□-?/, '')); if (d > 0) $('dSize').value = d; }
+  const take = nums.slice(-8);
+  if (take.length === 8) D_KEYS.forEach((k, i) => { $('d' + k).value = take[i]; });
+  dataCheck();
+}
+async function saveData(){
+  const g = id => $(id).value.trim();
+  const row = {maker:g('dMaker'), kind:g('dKind'), name:g('dName'), code:g('dName'), dim:g('dDim'), size:num(g('dSize')), src:g('dSrc'), addedAt:new Date().toISOString()};
+  D_KEYS.forEach(k => { row[k] = num(g('d' + k)); if (!Number.isFinite(row[k])) row[k] = null; });
+  const need = ['A','Ix','Zx','ix','iy'].filter(k => !(row[k] > 0));
+  if (!row.name || !(row.size > 0) || need.length) { $('dToast').textContent = `未入力：${[!row.name ? '名称' : '', !(row.size > 0) ? '幅' : ''].concat(need).filter(Boolean).join('、')}`; return; }
+  row.id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  try { const rows = localStore.read(); rows.push(row); if (!localStore.write(rows)) throw new Error('storage'); onUserData(rows); $('dToast').textContent = '登録しました'; ['dName','dDim','dSize','dSrc','dPaste'].concat(D_KEYS.map(k => 'd' + k)).forEach(id => { $(id).value = ''; }); $('dCheck').textContent = ''; }
+  catch (e) { $('dToast').textContent = e && e.code === 'invalid_argument' ? '保存の権限がありません' : e && e.code === 'quota_exceeded' ? '保存できる件数の上限です' : '保存できませんでした'; }
+  setTimeout(() => { $('dToast').textContent = ''; }, 4000);
+}
+function buildDataList(){
+  const list = userRows;
+  $('dList').innerHTML = `<h2>登録済みデータ（${list.length}件）</h2>` +
+    (list.length ? `<div class="scroll"><table style="min-width:820px"><thead><tr><th scope="col">メーカー・名称</th><th scope="col">寸法</th><th scope="col">幅</th>${D_KEYS.map(k => `<th scope="col">${k}</th>`).join('')}<th scope="col" class="txt">出典</th><th scope="col"></th></tr></thead><tbody>` +
+      list.map(r => `<tr><td>${esc(r.maker)}<br><span style="font-size:12px;color:var(--muted)">${esc(r.name)}</span></td><td>${esc(r.dim)}</td><td>${esc(r.size)}</td>${D_KEYS.map(k => `<td>${r[k] == null ? '—' : esc(r[k])}</td>`).join('')}<td class="txt" style="white-space:normal;min-width:160px">${esc(r.src)}</td><td><button type="button" class="btn d-del" data-id="${esc(r.id)}">削除</button></td></tr>`).join('') + '</tbody></table></div>'
+      : '<p class="hint">まだ登録はありません。</p>');
+}
+function onUserData(rows){
+  userRows = rows;
+  applyUserStuds(rows);
+  const sel = state.studId;
+  buildSelects(); $('stud').value = sel;
+  if (!STUDS.some(s => s.id === sel)) { state.studId = DEFAULTS.studId; $('stud').value = state.studId; }
+  buildReference(); buildDataList();
+  if (!$('panel-cmp').hidden) buildCompare();
+  update();
+}
+function wireData(){
+  $('dParse').addEventListener('click', parsePaste);
+  ['dA','dIx','dIy','dix','diy','dW'].forEach(id => $(id).addEventListener('input', dataCheck));
+  $('dSave').addEventListener('click', saveData);
+  $('dList').addEventListener('click', async e => {
+    const b = e.target.closest('.d-del'); if (!b) return;
+    const rows = localStore.read().filter(r => r.id !== b.dataset.id); localStore.write(rows); onUserData(rows);
+  });
+  buildDataList();
+  onUserData(localStore.read());
+  $('dExport').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(localStore.read(), null, 1)], {type:'application/json'});
+    saveBlob(blob, `壁下地_メーカーデータ_${todayStr()}.json`);
+    $('dToast2').textContent = '書き出しました';
+  });
+  $('dImport').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    try {
+      const add = JSON.parse(await f.text());
+      if (!Array.isArray(add)) throw new Error('format');
+      const rows = localStore.read(), key = r => [r.maker, r.name, r.dim, r.A, r.Ix, r.Zx].join('|'), have = new Set(rows.map(key));
+      let n = 0;
+      add.forEach(r => { if (r && typeof r === 'object' && !have.has(key(r))) { rows.push(Object.assign({}, r, {id: r.id || ('r' + Math.random().toString(36).slice(2, 10))})); have.add(key(r)); n++; } });
+      localStore.write(rows); onUserData(rows);
+      $('dToast2').textContent = `${n}件を追加しました`;
+    } catch (err) { $('dToast2').textContent = '読み込めませんでした（書き出したJSONファイルを選んでください）'; }
+    e.target.value = '';
+  });
+}
+
+/* ---------- PDF 発行（A4 縦。画面と同じ計算結果をページに割り付けて画像化） ---------- */
+let downloadsApi = null;
+function loadScript(src){
+  return new Promise((ok, ng) => {
+    if (document.querySelector(`script[src="${src}"]`)) return ok();
+    const el = document.createElement('script'); el.src = src; el.onload = () => ok(); el.onerror = () => ng(new Error('load ' + src));
+    document.head.appendChild(el);
+  });
+}
+function inlineSvgStyles(root){
+  root.querySelectorAll('svg').forEach(svg => {
+    svg.querySelectorAll('*').forEach(el => {
+      const cs = getComputedStyle(el);
+      const st = [`fill:${cs.fill}`, `stroke:${cs.stroke}`, `stroke-width:${cs.strokeWidth}`, `opacity:${cs.opacity}`];
+      if (el.tagName === 'text') st.push(`font-family:${cs.fontFamily}`, `font-size:${cs.fontSize}`, `font-weight:${cs.fontWeight}`);
+      if (cs.strokeDasharray && cs.strokeDasharray !== 'none') st.push(`stroke-dasharray:${cs.strokeDasharray}`);
+      el.setAttribute('style', st.join(';'));
+    });
+    const r = svg.getBoundingClientRect();
+    svg.setAttribute('width', Math.round(r.width)); svg.setAttribute('height', Math.round(r.height));
+  });
+}
+function reportHeader(r){
+  const s = r.stud;
+  const rows = [
+    ['日付', state.date],
+    ['検討会社', state.company || '—'], ['検討メーカー', state.maker || '—'],
+    ['壁種', state.wallType ? (() => { const w = WALLS.find(x => x.id === state.wallType); return `吉野石膏 ${w.name}（${w.arr}、${w.cert}）のボード構成・副資材`; })() : '手入力'],
+    ['検討の種類', r.mode === 'wall' ? '壁下地材強度検討' : '天井を受ける壁下地材強度検討（地震に対して）'],
+    ['検討部材', `${s.name}（${s.code}） ${s.dim}（幅 ${sg(studDepth(s))} mm）`],
+    ['総合判定', `<span class="verdict ${r.overall ? 'ok' : 'ng'}">${r.overall ? 'OK' : 'NG'}</span>　${r.mode === 'wall' ? `軸力 ${fx(r.ratio1, 3)}、地震時 ${fx(r.combined, 3)}` : `長期 ${fx(r.ratioL, 3)}、地震時 ${fx(r.ratioS, 3)}`}、たわみ ${ratioText(r.deflRatio)}（参考）`]
+  ];
+  return `<div class="blk"><h1>${r.mode === 'wall' ? '壁下地材強度検討書' : '天井を受ける壁下地材強度検討書'}</h1>
+    <p class="sub">軽量鉄骨下地（許容応力度による検討）</p>
+    <table class="kv">${rows.map(x => `<tr><th>${x[0]}</th><td>${x[1]}</td></tr>`).join('')}</table></div>`;
+}
+async function buildPdf(){
+  const r = current;
+  if (!r || !r.ok) throw new Error('入力に不備があります');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  try { await document.fonts.ready; } catch (e) { /* 無視 */ }
+  const host = document.createElement('div'); host.className = 'rpt'; document.body.appendChild(host);
+  try {
+    // ブロック：表紙情報 → 計算の各節 → 目安 → 対策案 → 前提
+    const blocks = [reportHeader(r)];
+    const res = $('results');
+    const order = [...res.querySelectorAll('.card:not(#altCard) .sec')].concat([...res.querySelectorAll('#altCard .sec')]);
+    order.forEach(sec => blocks.push(`<div class="blk">${sec.outerHTML}</div>`));
+    const pages = [];
+    const newPage = () => { const pg = document.createElement('div'); pg.className = 'pg'; pg.innerHTML = '<div class="body"></div>'; host.appendChild(pg); pages.push(pg); return pg.querySelector('.body'); };
+    const limit = 1123 - 46 - 56;
+    let body = newPage();
+    for (const html of blocks) {
+      const wrap = document.createElement('div'); wrap.innerHTML = html; const el = wrap.firstElementChild;
+      body.appendChild(el);
+      if (body.scrollHeight > limit && body.children.length > 1) { body.removeChild(el); body = newPage(); body.appendChild(el); }
+      if (body.scrollHeight > limit) { // 1ブロックで1ページを超える場合は縮小
+        const k = limit / el.scrollHeight; el.style.transformOrigin = 'top left'; el.style.transform = `scale(${k})`; el.style.width = (100 / k) + '%'; el.style.marginBottom = `-${el.scrollHeight * (1 - k)}px`;
+        body = newPage();
+      }
+    }
+    if (!pages[pages.length - 1].querySelector('.body').children.length) { pages.pop().remove(); }
+    pages.forEach((pg, i) => { const f = document.createElement('div'); f.className = 'foot'; f.innerHTML = `<span>${state.date}${state.company ? '　' + state.company : ''}${state.maker ? '　' + state.maker : ''}</span><span>${i + 1} / ${pages.length}</span>`; pg.appendChild(f); });
+    inlineSvgStyles(host);
+    const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+    for (let i = 0; i < pages.length; i++) {
+      const c = await window.html2canvas(pages[i], {scale:2, backgroundColor:'#ffffff', logging:false});
+      if (i) pdf.addPage();
+      pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+    }
+    return pdf.output('blob');
+  } finally { host.remove(); }
+}
+async function issuePdf(){
+  const btn = $('pdfBtn'); btn.disabled = true; $('toast').textContent = 'PDFを作成中…';
+  try {
+    const blob = await buildPdf();
+    const name = `壁下地材強度検討_${state.wallType ? WALLS.find(w => w.id === state.wallType).name.replace(/[\\/:*?"<>|\s・（）()]+/g, '') + '_' : ''}${state.date}.pdf`;
+    saveBlob(blob, name);
+    $('toast').textContent = 'PDFを発行しました';
+  } catch (e) {
+    const code = e && e.code;
+    $('toast').textContent = code === 'declined' ? '保存をキャンセルしました' : code === 'rate_limited' ? '少し待ってからもう一度押してください' : 'PDFを作成できませんでした' + (e && e.message ? '（' + e.message + '）' : '');
+  } finally { btn.disabled = false; setTimeout(() => { $('toast').textContent = ''; }, 5000); }
+}
+function saveBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+$('pdfBtn').hidden = false;
+$('pdfBtn').addEventListener('click', issuePdf);
+
+buildSelects();
+buildWallTypes();
+writeInputs();
+wireData();
+buildReference();
+buildNotes();
+wireEvents();
+update();
+</script>
+</body>
+</html>
