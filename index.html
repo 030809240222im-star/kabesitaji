@@ -91,12 +91,16 @@ input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--ng);ba
 .trio input{min-width:0}
 .trio .field:last-child{grid-column:1/-1}
 .trio input[type=date]{padding:9px 6px}
-.layer{display:grid;grid-template-columns:minmax(0,1fr) 108px 44px;gap:6px;margin-bottom:6px}
+.layer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--rule)}
+.layer .l-id{grid-column:1/-1}
+.layer .l-face{grid-column:2}
 .layer .unit input{padding-left:10px;padding-right:32px}
 .layer .custom{grid-column:1/-1}
 .ov{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 44px;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--rule)}
 .ov .o-opt{grid-column:1/-1}
 .ov .o-note{grid-column:1/-1}
+.ov .o-hwrap{grid-column:1/-1}
+.ov .o-hwrap input{padding-right:90px}
 .ov .unit input{padding-right:58px}
 .icon-btn{font:inherit;font-size:18px;min-height:44px;border:1px solid var(--rule);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer}
 .add-btn{font:inherit;font-size:14px;min-height:40px;border:1px dashed var(--accent);border-radius:8px;background:none;color:var(--accent);cursor:pointer;padding:0 12px;justify-self:start}
@@ -255,22 +259,22 @@ td.flag{background:var(--warn-bg);color:var(--warn);font-weight:700}
           <div class="chips" data-state="axis"><button type="button" class="chip" data-v="auto">自動</button><button type="button" class="chip" data-v="x">強軸 ix</button><button type="button" class="chip" data-v="y">弱軸 iy</button></div>
           <p class="hint" id="axisHint"></p></div>
         <div class="field" id="LbField"><label for="Lb">フレドメ間隔 Lb（弱軸の座屈長さ）</label>
-          <div class="unit"><input id="Lb" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <div class="unit"><input id="Lb" type="number" step="any" inputmode="decimal"><span>mm</span></div>
           <p class="hint">標準は約1,200mm間隔（公共建築工事標準仕様書・JASS26）。強軸 L/ix と弱軸 Lb/iy の大きい方で評価します。</p></div>
         <div class="field"><label for="a">スタッドピッチ a（p）</label>
-          <div class="unit"><input id="a" type="number" step="any" inputmode="decimal"><span>cm</span></div>
-          <div class="chips" data-for="a"><button type="button" class="chip num" data-v="22.75">22.75</button><button type="button" class="chip num" data-v="30.3">30.3</button><button type="button" class="chip num" data-v="45.5">45.5</button><button type="button" class="chip num" data-v="60.6">60.6</button></div>
-          <p class="hint">千鳥配置は 60.6（千鳥@303）</p></div>
+          <div class="unit"><input id="a" type="number" step="any" inputmode="decimal"><span>mm</span></div>
+          <div class="chips" data-for="a"><button type="button" class="chip num" data-v="227.5">227.5</button><button type="button" class="chip num" data-v="303">303</button><button type="button" class="chip num" data-v="455">455</button><button type="button" class="chip num" data-v="606">606</button></div>
+          <p class="hint">千鳥配置は 606（千鳥@303 の片側）</p></div>
         <div class="field"><label for="L" id="lblL">壁高 L（座屈長さ Lk = L）</label>
-          <div class="unit"><input id="L" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <div class="unit"><input id="L" type="number" step="any" inputmode="decimal"><span>mm</span></div>
           <p class="hint" id="LinM"></p></div>
         <div class="field" data-mode="ceiling" hidden><label for="ch">天井面の高さ ch（床から）</label>
-          <div class="unit"><input id="ch" type="number" step="any" inputmode="decimal"><span>cm</span></div>
+          <div class="unit"><input id="ch" type="number" step="any" inputmode="decimal"><span>mm</span></div>
           <p class="hint" id="ahHint"></p></div>
         <div class="field" data-mode="ceiling" hidden><label for="Lc">天井の奥行 L（壁に直交する方向の長さ）</label>
-          <div class="unit"><input id="Lc" type="number" step="any" inputmode="decimal"><span>cm</span></div></div>
+          <div class="unit"><input id="Lc" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
         <div class="field"><span class="lbl" id="lblLayers">このスタッドが支える面材</span>
-          <p class="hint" style="margin-bottom:4px">両面張りは両面分を入力。千鳥・片面張り（シャフト壁）は片側分。</p>
+          <p class="hint" style="margin-bottom:4px">面材ごとに枚数と貼る面（A面・B面・両面）を選びます。1本のスタッドが支える量は、千鳥・ダブルなら重い方の片面、それ以外は両面の合計として自動で計算します。</p>
           <div id="layers"></div>
           <button type="button" class="add-btn" id="addLayer">＋ 面材を追加</button>
           <span class="lbl" style="margin-top:6px">面重量の基準</span>
@@ -492,7 +496,7 @@ const GUIDE_ROWS = [
    arr: 千鳥＝スタッド@303（片側606）で各スタッドは片面のみ支持／共通＝両面を支持／共通×2＝2列、各列は片面を支持／片側＝片面壁
    up/dn: 上張・下張（1面あたり）、cav: 中空部の吸音材 */
 const CAVITY = {GW:{label:'グラスウール 24kg/m³・50mm', w:1.2}, AQ:{label:'アクリア 14kg/m³・50mm', w:0.7}, NONE:null};
-const B = {TSH:'GB-R-H(スーパー) 9.5mm', THHC:'GB-R-H(ハイパー) 9.5mm', Z21:'GB-F 21mm', Z15:'GB-F 15mm', Z125:'GB-F 12.5mm', TGR:'タイガーグラスロック 8mm'};
+const B = {R95:'GB-R 9.5mm', R125:'GB-R 12.5mm', TSH:'GB-R-H(スーパー) 9.5mm', THHC:'GB-R-H(ハイパー) 9.5mm', Z21:'GB-F 21mm', Z15:'GB-F 15mm', Z125:'GB-F 12.5mm', TGR:'タイガーグラスロック 8mm'};
 const WALLS = [
   // A-2000・WⅠシリーズ／スーパーウォールA（遮音）
   {id:'A2000-W1',    s:'A-2000・WⅠ／スーパーウォールA（遮音）', name:'A-2000・WⅠ',                     tld:56, t:136, kg:62, arr:'千鳥', up:'TSH', dn:'Z21', cav:'GW',  cert:'FP060NP-0473-1(2)／SOI-0260', p:'P.7'},
@@ -524,24 +528,35 @@ const WALLS = [
   {id:'F-HWZ',       s:'耐火：両面壁', name:'ハイパーウォールZ（耐火）',  tld:null, t:109, kg:43, arr:'共通', pitch:45.5, up:'THHC', dn:'Z125', cav:'NONE', cert:'FP060NP-0473-1(1)', p:'P.39'},
   {id:'F-SWA',       s:'耐火：両面壁', name:'スーパーウォールA（耐火）',  tld:null, t:126, kg:60, arr:'共通', pitch:45.5, up:'TSH', dn:'Z21', cav:'NONE', cert:'FP060NP-0473-1(1)', p:'P.40'},
   {id:'F-B15',       s:'耐火：両面壁', name:'B15',                     tld:null, t:125, kg:51, arr:'共通', pitch:45.5, up:'Z15', dn:'Z15', cav:'NONE', cert:'FP060NP-0483(1)', p:'P.41'},
-  {id:'F-GR1',       s:'耐火：両面壁', name:'GR-1',                    tld:null, t:106, kg:37, arr:'共通', pitch:45.5, up:'TGR', dn:'Z125', cav:'NONE', cert:'FP060NP-0509(1)', p:'P.42'}
+  {id:'F-GR1',       s:'耐火：両面壁', name:'GR-1',                    tld:null, t:106, kg:37, arr:'共通', pitch:45.5, up:'TGR', dn:'Z125', cav:'NONE', cert:'FP060NP-0509(1)', p:'P.42'},
+  // 一般壁（せっこうボード GB-R）。スタッド間隔はボード1枚張り @303、2枚張り @455（公共建築工事標準仕様書の目安）
+  {id:'G-R125-S',    s:'一般壁（GB-R）', name:'GB-R12.5 片面',        gen:true, arr:'片側', pitch:30.3, dn:'R125', up:null,  cav:'NONE'},
+  {id:'G-R125-D',    s:'一般壁（GB-R）', name:'GB-R12.5 両面',        gen:true, arr:'共通', pitch:30.3, dn:'R125', up:null,  cav:'NONE'},
+  {id:'G-R95x2-S',   s:'一般壁（GB-R）', name:'GB-R9.5＋9.5 片面',     gen:true, arr:'片側', pitch:45.5, dn:'R95',  up:'R95',  cav:'NONE'},
+  {id:'G-R95x2-D',   s:'一般壁（GB-R）', name:'GB-R9.5＋9.5 両面',     gen:true, arr:'共通', pitch:45.5, dn:'R95',  up:'R95',  cav:'NONE'},
+  {id:'G-R125R95-S', s:'一般壁（GB-R）', name:'GB-R12.5＋9.5 片面',    gen:true, arr:'片側', pitch:45.5, dn:'R125', up:'R95',  cav:'NONE'},
+  {id:'G-R125R95-D', s:'一般壁（GB-R）', name:'GB-R12.5＋9.5 両面',    gen:true, arr:'共通', pitch:45.5, dn:'R125', up:'R95',  cav:'NONE'},
+  {id:'G-R125x2-S',  s:'一般壁（GB-R）', name:'GB-R12.5＋12.5 片面',   gen:true, arr:'片側', pitch:45.5, dn:'R125', up:'R125', cav:'NONE'},
+  {id:'G-R125x2-D',  s:'一般壁（GB-R）', name:'GB-R12.5＋12.5 両面',   gen:true, arr:'共通', pitch:45.5, dn:'R125', up:'R125', cav:'NONE'}
 ];
 const SHIKIME_W = 2.0;   // 敷目板（タイガーボード12.5mm 帯板）。カタログ壁体重量の差（敷目板タイプ − 標準 ≒ 2kg/m²）から設定
 
 // 壁種から「1本のスタッドが支える材料」とピッチ等を作る
 // 壁全体の面材厚（両面。片側壁は片面）。カタログのボード構成から
 function presetBoardT(w){
-  const t = id => parseFloat(/([\d.]+)mm/.exec(B[id])[1]);
+  const t = id => id ? parseFloat(/([\d.]+)mm/.exec(B[id])[1]) : 0;
   return (t(w.dn) + t(w.up)) * (w.arr === '片側' ? 1 : 2);
 }
 function wallPreset(id){
   const w = WALLS.find(x => x.id === id);
   if (!w) return null;
-  const faces = (w.arr === '共通') ? 2 : 1;          // 共通配置だけが両面を支える
-  const layers = [{id:B[w.dn], n:faces, custom:''}, {id:B[w.up], n:faces, custom:''}];
+  // 面：片側壁（Sウォール・一般壁の片面）は A面（表面）だけ、それ以外は両面。1本が支える量は layersWeight が配置で判断
+  const face = w.arr === '片側' ? 'A' : 'both';
+  const layers = [{id:B[w.dn], n:1, face, custom:''}];
+  if (w.up) layers.push({id:B[w.up], n:1, face, custom:''});
   const cav = CAVITY[w.cav];
-  if (cav) layers.push({id:CUSTOM_ID, n:1, custom:String(cav.w), note:cav.label});
-  if (w.shiki) layers.push({id:CUSTOM_ID, n:1, custom:String(SHIKIME_W), note:'敷目板（推定）'});
+  if (cav) layers.push({id:CUSTOM_ID, n:1, face:'A', custom:String(cav.w), note:cav.label});
+  if (w.shiki) layers.push({id:CUSTOM_ID, n:1, face:'A', custom:String(SHIKIME_W), note:'敷目板（推定）'});
   const pitch = w.pitch || 60.6;                       // 千鳥@303（片側606）・共通×2 @606
   return {
     wall:w,
@@ -563,25 +578,42 @@ function overlayUnit(item, basis){
   if (item.opt && item.opt.startsWith('B:')) { const b = boardById(item.opt.slice(2)); return b ? {unit: boardWeight(b, basis), label:b.id, perSheet:true} : null; }
   return null;
 }
-// 1本のスタッドが支える増し貼り重量。共通配置（または壁種未選択）は両面の合計、千鳥・ダブル・片側壁は重い方の片面
+// 1本のスタッドが片面だけを支える配置（千鳥・ダブルスタッド）。片側壁（Sウォール）・共通配置は両面とも同じスタッドが支える
+function isSplit(inp){
+  const w = typeof WALLS !== 'undefined' ? WALLS.find(x => x.id === inp.wallType) : null;
+  return !!(w && (w.arr === '千鳥' || w.arr === '共通×2'));
+}
+function faceOf(f){ return f === 'B' ? 'B' : f === 'both' ? 'both' : 'A'; }
+// 増し貼り・仕上げ。h（mm、床からの高さ）までの部分貼りに対応。空欄・壁高以上は全高
 function overlayWeight(inp){
   const list = Array.isArray(inp.over) ? inp.over : [];
+  const H = num(inp.L);
   const errors = [], items = [];
-  let A = 0, Bf = 0;
+  const face = {A:{full:0, part:[]}, B:{full:0, part:[]}};
   list.forEach((it, i) => {
     const u = overlayUnit(it, inp.basis);
     if (!u) { errors.push({field:'over', msg:`増し貼り${i + 1}の種類を選んでください`}); return; }
     const n = u.perSheet ? num(it.n) : 1;
     if (u.perSheet && !(n >= 1 && Number.isInteger(n))) { errors.push({field:'over', msg:`増し貼り${i + 1}の枚数は1以上の整数で入力してください`}); return; }
     if (!(u.unit >= 0)) { errors.push({field:'over', msg:`増し貼り${i + 1}の重さ（kg/m²）を 0 以上で入力してください`}); return; }
-    const sub = u.unit * n, face = it.face === 'B' ? 'B' : it.face === 'both' ? 'both' : 'A';
-    if (face !== 'B') A += sub;
-    if (face !== 'A') Bf += sub;
-    items.push({label:u.label, unit:u.unit, n, sub, face, perSheet:u.perSheet});
+    const hmm = (it.h === '' || it.h == null) ? null : num(it.h);
+    if (hmm !== null && !(hmm > 0)) { errors.push({field:'over', msg:`増し貼り${i + 1}の高さは 0 より大きい値にするか、空欄（全高）にしてください`}); return; }
+    const h = hmm === null || !(H > 0) || hmm / 10 >= H ? null : hmm / 10;   // cm、null は全高
+    const sub = u.unit * n, f = faceOf(it.face);
+    ['A', 'B'].forEach(k => { if (f === k || f === 'both') { if (h === null) face[k].full += sub; else face[k].part.push({w:sub, h, label:u.label}); } });
+    items.push({label:u.label, unit:u.unit, n, sub, face:f, perSheet:u.perSheet, h});
   });
-  const w = typeof WALLS !== 'undefined' ? WALLS.find(x => x.id === inp.wallType) : null;
-  const split = !!(w && w.arr !== '共通');
-  return {A, B:Bf, per: split ? Math.max(A, Bf) : A + Bf, split, items, errors};
+  const split = isSplit(inp);
+  const eq = k => face[k].full + (H > 0 ? face[k].part.reduce((t, p) => t + p.w * p.h / H, 0) : 0);
+  let per, partials, pick = null;
+  if (split) {
+    pick = eq('A') >= eq('B') ? 'A' : 'B';
+    per = face[pick].full; partials = face[pick].part.map(p => Object.assign({face:pick}, p));
+  } else {
+    per = face.A.full + face.B.full;
+    partials = face.A.part.map(p => Object.assign({face:'A'}, p)).concat(face.B.part.map(p => Object.assign({face:'B'}, p)));
+  }
+  return {A: eq('A'), B: eq('B'), Afull: face.A.full, Bfull: face.B.full, per, partials, split, pick, items, errors};
 }
 
 // 下地材重量の自動算定：関包計算書の @303 → 5 kg/m²（千鳥@606 → 2.5）をピッチで按分
@@ -613,12 +645,13 @@ function boardById(id){ return BOARDS.find(b => b.id === id); }
 function boardWeight(b, basis){ return (basis === 'kanpo' && b.kanpo != null) ? b.kanpo : b.cat; }
 function sheetAreaM2(b){ return (b.size === '606' ? 0.606 : 0.91) * 1.82; }
 
-function layersWeight(layers, basis){
+// 面材（壁種の基本構成）。face：A・B・両面。1本のスタッドが支える量は、千鳥・ダブルは重い方の片面、それ以外は両面の合計
+function layersWeight(layers, basis, inp){
   const items = [], errors = [], fallback = [];
-  let total = 0;
+  let A = 0, Bf = 0;
   if (!Array.isArray(layers) || layers.length === 0) {
     errors.push({field:'layers', msg:'仕上材を1つ以上選んでください'});
-    return {W1:0, items, errors, fallback};
+    return {W1:0, A:0, B:0, items, errors, fallback};
   }
   layers.forEach((l, idx) => {
     const n = num(l.n);
@@ -633,10 +666,13 @@ function layersWeight(layers, basis){
       unit = boardWeight(b, basis); label = b.id;
       if (basis === 'kanpo' && b.kanpo == null) fallback.push(b.id);
     }
-    items.push({label, unit, n, sub: unit * n});
-    total += unit * n;
+    const f = faceOf(l.face), sub = unit * n;
+    if (f !== 'B') A += sub;
+    if (f !== 'A') Bf += sub;
+    items.push({label, unit, n, sub, face:f});
   });
-  return {W1:total, items, errors, fallback};
+  const split = inp ? isSplit(inp) : false;
+  return {W1: split ? Math.max(A, Bf) : A + Bf, A, B:Bf, split, items, errors, fallback};
 }
 
 // 細長比。フレドメ有（自動）は 強軸 L/ix と 弱軸 Lb/iy（Lb=フレドメ間隔）の大きい方、無は 弱軸 L/iy
@@ -683,12 +719,26 @@ function prepare(inp){
   if (!(E > 0)) errors.push({field:'E', msg:'E を 0 より大きい値で入力してください'});
   if (!(F > 0)) errors.push({field:'F', msg:'F を 0 より大きい値で入力してください'});
   if (fcManual !== null && !(fcManual > 0)) errors.push({field:'fcManual', msg:'fc の手入力は 0 より大きい値にするか、空欄にしてください'});
-  const lw = layersWeight(inp.layers, inp.basis);
+  const lw = layersWeight(inp.layers, inp.basis, inp);
   lw.errors.forEach(e => errors.push(e));
   const ov = overlayWeight(inp);
   ov.errors.forEach(e => errors.push(e));
   lw.base = lw.W1; lw.W1 = lw.W1 + ov.per; lw.ov = ov;
   return {errors, stud, a, H, W2, fb, E, F, Lb, fcManual, den, lw};
+}
+
+// 単純梁（スパン H、x は床から）に部分等分布荷重 segs=[{q, from, to}] が作用するときの最大曲げモーメントと最大たわみ（数値計算）
+function beamPartial(H, segs, EI){
+  const N = 1200, dx = H / N;
+  const R0 = segs.reduce((t, s) => t + s.q * (s.to - s.from) * (H - (s.from + s.to) / 2) / H, 0);
+  const Mx = x => R0 * x - segs.reduce((t, s) => { if (x <= s.from) return t; const t2 = Math.min(x, s.to); return t + s.q * ((x - s.from) ** 2 - (x - t2) ** 2) / 2; }, 0);
+  let Mmax = 0, th = 0, y = 0;
+  const ys = [0], Ms = [Mx(0)];
+  for (let i = 1; i <= N; i++) { const m = Mx(i * dx); Ms.push(m); if (Math.abs(m) > Mmax) Mmax = Math.abs(m); }
+  for (let i = 1; i <= N; i++) { th += (Ms[i - 1] + Ms[i]) / 2 / EI * dx; y += th * dx; ys.push(y); }
+  let dmax = 0;
+  for (let i = 0; i <= N; i++) { const v = Math.abs(ys[i] - ys[N] * i / N); if (v > dmax) dmax = v; }
+  return {Mmax, dmax};
 }
 
 function longTermFc(p, lambda){
@@ -718,6 +768,15 @@ function calc(inp){
   const {stud, a, H, W2, fb, E, F, den, lw} = p;
   const ax = resolveAxis(stud, inp.bracing, inp.axis, H, p.Lb);
   const W1 = lw.W1, W = W1 + W2, w = W / 10000;
+  const parts = (lw.ov ? lw.ov.partials : []).map(q => ({w: q.w / 10000, h: q.h, kg: q.w, label: q.label, face: q.face}));
+  const partSum = parts.reduce((t, q) => t + q.w * q.h, 0);        // kg/cm（スタッド1本あたりは × a）
+  const Weq = W + parts.reduce((t, q) => t + q.kg * q.h / H, 0);    // 平均の壁荷重 kg/m²
+  const lateral = (kk) => {                                         // 面外荷重の最大曲げ・たわみ
+    const q0 = kk * w * a;
+    if (!parts.length) return {M: q0 * H * H / 8, d: 5 * q0 * Math.pow(H, 4) / (384 * E * stud.Ix), numeric:false};
+    const r = beamPartial(H, [{q:q0, from:0, to:H}].concat(parts.map(q => ({q: kk * q.w * a, from:0, to:q.h}))), E * stud.Ix);
+    return {M: r.Mmax, d: r.dmax, numeric:true};
+  };
   const lambda = ax.lambda;
   const lambdaOk = lambda <= LIMIT_LAMBDA;
   const lt = longTermFc(p, lambda);
@@ -725,39 +784,41 @@ function calc(inp){
   const depth = studDepth(stud);
   const fitOk = null;
   const lenMax = maxLen(stud), lenOk = H <= lenMax;
-  const base = {ok:true, mode, stud, ax, lenMax, lenOk, fit: Object.assign({depth, ok: fitOk}, fi), a, H, W1, W2, W2auto: inp.W2mode === 'auto', matF: !!stud.F, W, w, lw, fb, E, F, den, lambda, lambdaOk,
+  const base = {ok:true, mode, stud, ax, lenMax, lenOk, fit: Object.assign({depth, ok: fitOk}, fi), a, H, W1, W2, W2auto: inp.W2mode === 'auto', matF: !!stud.F, W, w, Weq, parts, lw, fb, E, F, den, lambda, lambdaOk,
                 fcAuto: lt.auto, fcl: lt.fcl, fcIsManual: lt.manual, basis: inp.basis};
 
   if (mode === 'wall') {
     const Pa = lt.fcl * stud.A;
-    const P = w * H * a;
+    const P = (w * H + partSum) * a;
     const ratio1 = P / Pa;
-    const M = k * w * a * H * H / 8;
+    const lat = lateral(k);
+    const M = lat.M;
     const bend = M / stud.Zx / fb, axial = P / Pa / 1.5;
     const combined = bend + axial;
     const wd = k * w * a;
-    const delta = 5 * wd * Math.pow(H, 4) / (384 * E * stud.Ix);
+    const delta = lat.d;
     const deflRatio = delta > 0 ? H / delta : Infinity;
-    return Object.assign(base, {k, Pa, P, ratio1, ok1: ratio1 <= 1, M, bend, axial, combined, ok2: combined <= 1,
+    return Object.assign(base, {k, numeric: lat.numeric, Pa, P, ratio1, ok1: ratio1 <= 1, M, bend, axial, combined, ok2: combined <= 1,
       wd, delta, deflRatio, deflOk: deflRatio >= den, overall: lambdaOk && ratio1 <= 1 && combined <= 1 && lenOk});
   }
 
   // 天井を受ける壁（地震時に天井から慣性力を受ける）
   const ah = H - ch, wc = Wc / 10000;
   const fcs = 1.5 * lt.fcl;
-  const Nl = w * a * H + wc * a * Lc / 2;
+  const Nl = (w * H + partSum) * a + wc * a * Lc / 2;
   const sigCl = Nl / stud.A;
   const ratioL = sigCl / lt.fcl;
   const wh = w * a * kh;
   const P = wc * Lc * a * kh;
   const N = Nl * (kv + 1);
   const sigC = N / stud.A;
-  const M1 = wh * H * H / 8;
+  const latC = lateral(kh);
+  const M1 = latC.M;
   const M2 = P * ah * ch / H;
   const M = M1 + M2;
   const sigB = M / stud.Zx;
   const ratioS = sigC / fcs + sigB / fb;
-  const d1 = 5 * wh * Math.pow(H, 4) / (384 * E * stud.Ix);
+  const d1 = latC.d;
   // 集中荷重の最大たわみ δ = P・b・{(H²−b²)/3}^1.5 / (3EIH)、b は荷重点から近い方の支点までの距離
   // （関包計算書は b = ch 固定。ch > H/2 では過小評価になるため b = min(ch, ah) とする）
   const bP = Math.min(ch, ah);
@@ -765,7 +826,7 @@ function calc(inp){
   const d2Kanpo = P * ch * Math.sqrt(Math.pow((ah * ah + 2 * ah * ch) / 3, 3)) / (3 * E * stud.Ix * H);
   const delta = d1 + d2;
   const deflRatio = delta > 0 ? H / delta : Infinity;
-  return Object.assign(base, {ch, Lc, Wc, kh, kv, ah, wc, fcs, Nl, sigCl, ratioL, okL: ratioL <= 1,
+  return Object.assign(base, {numeric: latC.numeric, ch, Lc, Wc, kh, kv, ah, wc, fcs, Nl, sigCl, ratioL, okL: ratioL <= 1,
     wh, P, N, sigC, M1, M2, M, sigB, ratioS, okS: ratioS <= 1, d1, d2, bP, d2Kanpo, deltaKanpo: d1 + d2Kanpo, delta, deflRatio, deflOk: deflRatio >= den,
     overall: lambdaOk && ratioL <= 1 && ratioS <= 1 && lenOk});
 }
@@ -790,9 +851,7 @@ const ALT_DEFL = 100;
 
 // 壁全体の重量（kg/m²）：千鳥・ダブル・片側壁は1本が片面を支えるため片面分×2
 function wallTotalWeight(inp, r){
-  const w = WALLS.find(x => x.id === inp.wallType);
-  const split = !!(w && w.arr !== '共通');
-  return r.W1 * (split ? 2 : 1) + r.W2;
+  return (r.Weq - r.W2) * (isSplit(inp) ? 2 : 1) + r.W2;
 }
 // 桐井製作所 壁種毎 建込下地一覧（地震時たわみ 1/100、側圧 1/200）2025.11.10 の限界高さ（mm）
 // lgs：スタッド LGS100、tw：タワーウォール100、c100：補強材 C-100×1.6。各 [@455, @303, @227.5]
@@ -965,7 +1024,8 @@ function wallTypeHint(){
   if (!w) { $('wallTypeHint').textContent = 'タイガードリーミィ、A60 は下地構成が特殊なため収録していません。'; return; }
   const per = w.arr === '千鳥' ? '千鳥@303（片側606）：1本のスタッドは片面の面材を支持'
     : w.arr === '共通×2' ? 'ダブルスタッド@606：各列のスタッドは片面の面材を支持'
-    : w.arr === '片側' ? `片面壁@${w.pitch * 10}：片面の面材を支持` : `共通配置@${w.pitch * 10}：1本のスタッドが両面の面材を支持`;
+    : w.arr === '片側' ? `片面壁@${w.pitch * 10}：表面の面材を支持（裏面に貼る材料も同じスタッドが支持）` : `共通配置@${w.pitch * 10}：1本のスタッドが両面の面材を支持`;
+  if (w.gen) { $('wallTypeHint').textContent = `一般壁：${w.name}（${w.arr === '片側' ? '片面張り' : '両面張り'}、スタッド @${w.pitch * 10}）。面材・ピッチ・フレドメを自動入力しました。スタッド間隔はボード1枚張り @303、2枚張り @455 を目安にしています。各欄は個別に変更できます。`; return; }
   $('wallTypeHint').textContent = `${w.arr}・${w.tld ? `TLD-${w.tld}・` : ''}${w.cert}（カタログ ${w.p}）。カタログからはボードの種類・重さと副資材（吸音材${w.shiki ? '・敷目板' : ''}）だけを使います。${per}。面材・ピッチ・フレドメを自動入力しました（ピッチ・フレドメはボードをどのスタッドが支えるかで決まるため）。スタッドは選択中の部材のままです。各欄は個別に変更できます。`;
 }
 function applyWallType(id){
@@ -984,6 +1044,14 @@ function overOptions(sel){
     `<optgroup label="ケイ酸カルシウム板（JIS A 5430）">${CALSIL.map(c => `<option value="C:${c.id}" ${sel === 'C:' + c.id ? 'selected' : ''}>${c.id}（${c.w} kg/m²）</option>`).join('')}</optgroup>` +
     `<optgroup label="その他"><option value="KG" ${sel === 'KG' ? 'selected' : ''}>石・タイル張り等（1m² あたり kg を入力）</option></optgroup>`;
 }
+function faceLabels(){
+  const w = WALLS.find(x => x.id === state.wallType);
+  return w && w.arr === '片側' ? {A:'表面', B:'裏面', both:'表裏'} : {A:'A面', B:'B面', both:'両面'};
+}
+function faceSelect(cls, v, i, what){
+  const L = faceLabels();
+  return `<select class="${cls}" aria-label="${what}${i + 1}の面">${['A', 'B', 'both'].map(k => `<option value="${k}" ${faceOf(v) === k ? 'selected' : ''}>${L[k]}</option>`).join('')}</select>`;
+}
 function renderOver(){
   const list = state.over || [];
   $('over').innerHTML = list.map((o, i) => {
@@ -993,8 +1061,9 @@ function renderOver(){
       ${kg ? `<input class="o-note" type="text" value="${(o.note || '').replace(/"/g, '&quot;')}" placeholder="名称（例：磁器タイル張り 接着剤含む）" aria-label="増し貼り${i + 1}の名称">` : ''}
       ${kg ? `<div class="unit"><input class="o-kg" type="number" step="any" inputmode="decimal" value="${o.kg}" placeholder="kg/m²" aria-label="増し貼り${i + 1}の重さ"><span>kg/m²</span></div>`
            : `<div class="unit"><input class="o-n" type="number" min="1" step="1" inputmode="numeric" value="${o.n}" aria-label="増し貼り${i + 1}の枚数"><span>枚</span></div>`}
-      <select class="o-face" aria-label="増し貼り${i + 1}の面"><option value="A" ${o.face === 'A' ? 'selected' : ''}>A面</option><option value="B" ${o.face === 'B' ? 'selected' : ''}>B面</option><option value="both" ${o.face === 'both' ? 'selected' : ''}>両面</option></select>
+      ${faceSelect('o-face', o.face, i, '増し貼り')}
       <button type="button" class="icon-btn o-del" aria-label="増し貼り${i + 1}を削除">×</button>
+      <div class="unit o-hwrap"><input class="o-h" type="number" step="any" inputmode="decimal" value="${o.h == null ? '' : o.h}" placeholder="空欄＝全高（天井まで）" aria-label="増し貼り${i + 1}の高さ"><span>mm まで</span></div>
     </div>`;
   }).join('');
 }
@@ -1004,15 +1073,20 @@ function renderLayers(){
     <div class="layer" data-i="${i}">
       <select class="l-id" aria-label="面材${i + 1}の種類">${layerOptions(l.id)}</select>
       <div class="unit"><input class="l-n" type="number" min="1" step="1" inputmode="numeric" value="${l.n}" aria-label="面材${i + 1}の枚数"><span>枚</span></div>
+      ${faceSelect('l-face', l.face, i, '面材')}
       <button type="button" class="icon-btn l-del" aria-label="面材${i + 1}を削除" ${state.layers.length === 1 ? 'disabled' : ''}>×</button>
       ${l.id === CUSTOM_ID && l.note ? `<p class="hint custom">${l.note}</p>` : ''}
       ${l.id === CUSTOM_ID ? `<div class="unit custom"><input class="l-custom" type="number" step="any" inputmode="decimal" value="${l.custom}" placeholder="例: グラスウール 1.2" aria-label="面材${i + 1}の面重量"><span>kg/m²</span></div>` : ''}
     </div>`).join('');
 }
+// 長さの入力欄は mm 表示。計算（state）は cm のまま
+const MM_FIELDS = ['L', 'ch', 'Lc', 'Lb', 'a'];
+const toMM = v => (v === '' || v == null || !Number.isFinite(num(v))) ? '' : String(Math.round(num(v) * 10 * 1000) / 1000);
+const toCM = v => (v === '' || v == null || !Number.isFinite(num(v))) ? v : String(num(v) / 10);
 function writeInputs(){
   FIELD_IDS.forEach(id => {
     const key = id === 'stud' ? 'studId' : id;
-    $(id).value = state[key];
+    $(id).value = MM_FIELDS.includes(id) ? toMM(state[key]) : state[key];
   });
   renderLayers();
   if (!Array.isArray(state.over)) state.over = [];
@@ -1022,7 +1096,7 @@ function writeInputs(){
 function readInputs(){
   FIELD_IDS.forEach(id => {
     const key = id === 'stud' ? 'studId' : id;
-    state[key] = $(id).value;
+    state[key] = MM_FIELDS.includes(id) ? toCM($(id).value) : $(id).value;
   });
 }
 function applyMode(){
@@ -1066,16 +1140,18 @@ function fcExpr(r){
 }
 function weightRows(r){
   const ov = r.lw.ov;
-  const faceTxt = f => f === 'both' ? '両面' : f + '面';
-  const items = r.lw.items.map(it => `${it.label}：${sg(it.unit)} × ${it.n}${it.label.indexOf('（') >= 0 || it.label === 'その他（手入力）' ? '' : '枚'}`).join('<br>') +
-    (ov && ov.items.length ? `<br>— 増し貼り・仕上げ —<br>` + ov.items.map(it => `${faceTxt(it.face)}：${it.label} ${sg(it.unit)}${it.perSheet ? ` × ${it.n}枚` : ''}`).join('<br>') +
-      `<br>A面 ${sg(ov.A)}、B面 ${sg(ov.B)} → ${ov.split ? '重い方の片面' : '両面合計'} ${sg(ov.per)}` : '');
+  const L = faceLabels(), faceTxt = f => L[faceOf(f)];
+  const items = r.lw.items.map(it => `${faceTxt(it.face)}：${it.label} ${sg(it.unit)} × ${it.n}${it.label.indexOf('（') >= 0 || it.label === 'その他（手入力）' ? '' : '枚'}`).join('<br>') +
+    `<br>${r.lw.split ? `A面 ${sg(r.lw.A)}、B面 ${sg(r.lw.B)} → 1本は重い方の片面 ${sg(r.lw.base)}` : `1本が支える合計 ${sg(r.lw.base)}`}` +
+    (ov && ov.items.length ? `<br>— 増し貼り・仕上げ —<br>` + ov.items.map(it => `${faceTxt(it.face)}：${it.label} ${sg(it.unit)}${it.perSheet ? ` × ${it.n}枚` : ''}${it.h ? `（高さ ${sg(it.h * 10)} mm まで）` : '（全高）'}`).join('<br>') +
+      `<br>全高分 ${sg(ov.per)} を W1 に加算${ov.split ? `（${ov.pick}面）` : ''}` : '');
   const fb = r.lw.fallback.length ? `<br>関包値の記載がないためカタログ値を使用：${r.lw.fallback.join('、')}` : '';
   const basisText = r.basis === 'kanpo' ? '関包スチール計算書の値' : '吉野石膏カタログ代表値';
   return row('仕上材重量 <small>W1</small>', `${items}<br>基準：${basisText}${fb}`, fx(r.W1, 2), 'kg/m²') +
          row('下地材重量 <small>W2</small>', r.W2auto ? (r.stud.tube ? `自動：${r.stud.W} / ${sg(r.a / 100)} + 1.0` : `自動：5 × 30.3 / ${sg(r.a)}`) : '手入力', fx(r.W2, 2), 'kg/m²') +
          row('壁の設計荷重 <small>W = W1 + W2</small>', `${sg(r.W1)} + ${sg(r.W2)}`, fx(r.W, 2), 'kg/m²') +
-         row('単位換算 <small>w = W / 10000</small>', `${sg(r.W)} / 10000`, sg(r.w), 'kg/cm²');
+         row('単位換算 <small>w = W / 10000</small>', `${sg(r.W)} / 10000`, sg(r.w), 'kg/cm²') +
+         (r.parts.length ? row('部分高さの荷重 <small>床から指定高さまで</small>', r.parts.map(q => `${faceTxt(q.face)}：${q.label} ${sg(q.kg)} kg/m² × 高さ ${sg(q.h * 10)} mm`).join('<br>') + `<br>軸力に加算し、曲げ・たわみは部分荷重として数値計算します（平均の壁荷重 ${fx(r.Weq, 2)} kg/m²）`, '', '') : '');
 }
 function propsBlock(r){
   const s = r.stud;
@@ -1231,19 +1307,19 @@ function renderWall(r){
       ${lambdaJudge(r, 'L')}
       ${row('長期許容圧縮応力度 <small>fc</small>', fcExpr(r), fx(r.fcl, 1), 'kg/cm²')}
       ${row('1本あたりの耐力 <small>Pa = fc × A</small>', `${fx(r.fcl, 1)} × ${s.A}`, fx(r.Pa, 1), 'kg')}
-      ${row('1本にかかる荷重 <small>P = w × L × a</small>', `${sg(r.w)} × ${sg(r.H)} × ${sg(r.a)}`, fx(r.P, 2), 'kg')}
+      ${row('1本にかかる荷重 <small>P = w × L × a</small>', `${sg(r.w)} × ${sg(r.H)} × ${sg(r.a)}${r.parts.length ? ' ＋ 部分高さの荷重 Σ(w・h)・a' : ''}`, fx(r.P, 2), 'kg')}
       ${judge('判定 P / Pa', fx(r.ratio1, 3), '≦ 1', r.ratio1, r.ok1, `${fx(r.P, 2)} / ${fx(r.Pa, 1)}`)}
     </div>
     <div class="sec"><h3>② 地震時の検討 <small>短期</small></h3>
       <div class="fig">${figWallQuake(r)}</div>
       ${row('設計震度 <small>k</small>', '', sg(r.k), 'G')}
       ${row('短期許容曲げ応力度 <small>fb</small>', '', sg(r.fb), 'kg/cm²')}
-      ${row('最大曲げモーメント <small>M = k・w・a・L² / 8</small>', `${sg(r.k)} × ${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)}² / 8`, fx(r.M, 1), 'kg・cm')}
+      ${row('最大曲げモーメント <small>M = k・w・a・L² / 8</small>', r.numeric ? '部分高さの荷重を含むため、単純梁として数値計算' : `${sg(r.k)} × ${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)}² / 8`, fx(r.M, 1), 'kg・cm')}
       ${judge('判定 M / Z / fb + P / Pa / 1.5', fx(r.combined, 3), '≦ 1', r.combined, r.ok2, `${fx(r.M, 1)} / ${s.Zx} / ${sg(r.fb)} + ${fx(r.P, 2)} / ${fx(r.Pa, 1)} / 1.5<br>曲げ ${fx(r.bend, 3)} ＋ 軸力 ${fx(r.axial, 3)}`)}
     </div>
     ${deflBlock(r, 'L',
       row('地震時の分布荷重 <small>w\' = k・w・a</small>', `${sg(r.k)} × ${sg(r.w)} × ${sg(r.a)}`, sg(r.wd), 'kg/cm') +
-      row('たわみ <small>δ = 5w\'L⁴ / (384EI)</small>', `5 × ${sg(r.wd)} × ${sg(r.H)}⁴ / (384 × ${sg(r.E)} × ${s.Ix})`, fx(r.delta, 3), 'cm'))}
+      row('たわみ <small>δ = 5w\'L⁴ / (384EI)</small>', r.numeric ? '部分高さの荷重を含むため、単純梁として数値計算' : `5 × ${sg(r.wd)} × ${sg(r.H)}⁴ / (384 × ${sg(r.E)} × ${s.Ix})`, fx(r.delta, 3), 'cm'))}
   </div>` + guideBlock(r);
 }
 
@@ -1265,7 +1341,7 @@ function renderCeiling(r){
       ${row('短期許容曲げ応力度 <small>fb</small>', '', sg(r.fb), 'kg/cm²')}
     </div>
     <div class="sec"><h3>長期荷重時</h3>
-      ${row('スタッドの軸力 <small>Nl = W・p・H + Wc・p・L/2</small>', `${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)} + ${sg(r.wc)} × ${sg(r.a)} × ${sg(r.Lc)} / 2`, fx(r.Nl, 2), 'kg')}
+      ${row('スタッドの軸力 <small>Nl = W・p・H + Wc・p・L/2</small>', `${r.parts.length ? '（部分高さの荷重を加算）' : ''}${sg(r.w)} × ${sg(r.a)} × ${sg(r.H)} + ${sg(r.wc)} × ${sg(r.a)} × ${sg(r.Lc)} / 2`, fx(r.Nl, 2), 'kg')}
       ${row('軸応力度 <small>σcl = Nl / A</small>', `${fx(r.Nl, 2)} / ${s.A}`, fx(r.sigCl, 2), 'kg/cm²')}
       ${judge('判定 σcl / fcl', fx(r.ratioL, 3), '≦ 1', r.ratioL, r.okL, `${fx(r.sigCl, 2)} / ${fx(r.fcl, 2)}`)}
     </div>
@@ -1275,13 +1351,13 @@ function renderCeiling(r){
       ${row('天井から受ける慣性力 <small>P = Wc・L・p・kh</small>', `${sg(r.wc)} × ${sg(r.Lc)} × ${sg(r.a)} × ${sg(r.kh)}`, fx(r.P, 3), 'kg')}
       ${row('軸力 <small>N = Nl × (kv + 1)</small>', `${fx(r.Nl, 2)} × ${sg(r.kv + 1)}`, fx(r.N, 2), 'kg')}
       ${row('軸応力度 <small>σc = N / A</small>', `${fx(r.N, 2)} / ${s.A}`, fx(r.sigC, 2), 'kg/cm²')}
-      ${row('曲げモーメント <small>M1 = w・H² / 8</small>', `${sg(r.wh)} × ${sg(r.H)}² / 8`, fx(r.M1, 1), 'kg・cm')}
+      ${row('曲げモーメント <small>M1 = w・H² / 8</small>', r.numeric ? '部分高さの荷重を含むため数値計算' : `${sg(r.wh)} × ${sg(r.H)}² / 8`, fx(r.M1, 1), 'kg・cm')}
       ${row('曲げモーメント <small>M2 = P・ah・ch / H</small>', `${fx(r.P, 3)} × ${sg(r.ah)} × ${sg(r.ch)} / ${sg(r.H)}`, fx(r.M2, 1), 'kg・cm')}
       ${row('合計 <small>M = M1 + M2、σb = M / Z</small>', `${fx(r.M, 1)} / ${s.Zx}`, `${fx(r.M, 1)} → ${fx(r.sigB, 1)}`, 'kg・cm → kg/cm²')}
       ${judge('判定 σc / fc + σb / fb', fx(r.ratioS, 3), '≦ 1', r.ratioS, r.okS, `${fx(r.sigC, 2)} / ${fx(r.fcs, 2)} + ${fx(r.sigB, 1)} / ${sg(r.fb)}`)}
     </div>
     ${deflBlock(r, 'H',
-      row('壁分のたわみ <small>5wH⁴ / (384EI)</small>', '', fx(r.d1, 3), 'cm') +
+      row('壁分のたわみ <small>5wH⁴ / (384EI)</small>', r.numeric ? '部分高さの荷重を含むため数値計算' : '', fx(r.d1, 3), 'cm') +
       row('天井荷重分のたわみ <small>P・b・√[{(H² − b²)/3}³] / (3EIH)</small>', `b = min(ch, ah) = ${sg(r.bP)} cm（荷重点から近い方の支点まで）${r.bP !== r.ch ? `<br>関包計算書の式（b = ch）では ${fx(r.d2Kanpo, 3)} cm` : ''}`, fx(r.d2, 3), 'cm') +
       row('合計 <small>δ</small>', '', fx(r.delta, 3), 'cm'))}
   </div>` + guideBlock(r);
@@ -1429,7 +1505,7 @@ function update(){
   const Hn = num(state.L);
   $('LinM').textContent = Number.isFinite(Hn) ? '= ' + fx(Hn / 100, 2) + ' m' : '';
   const chn = num(state.ch);
-  $('ahHint').textContent = (Number.isFinite(chn) && Number.isFinite(Hn)) ? `天井面より上の高さ ah = H − ch = ${fx(Hn - chn, 1)} cm` : '';
+  $('ahHint').textContent = (Number.isFinite(chn) && Number.isFinite(Hn)) ? `天井面より上の高さ ah = H − ch = ${fx((Hn - chn) * 10, 0)} mm` : '';
   const sd = STUDS.find(x => x.id === state.studId);
   $('studDim').textContent = sd ? `寸法 ${sd.dim}　A = ${sd.A}　I = ${sd.Ix}　Z = ${sd.Zx}　ix = ${sd.ix}　iy = ${sd.iy}${sd.tube ? '　材料 STKR400：F = fb = 2400 kg/cm²（詳細設定の F・fb より優先）' : ''}` : '';
   if (sd) {
@@ -1448,7 +1524,9 @@ function update(){
     const ov = overlayWeight(state);
     $('overHint').textContent = !(state.over || []).length
       ? 'ボード・ケイカル板の増し貼りや、石・タイル張り（kg/m²）を追加できます。A面・B面は壁の表と裏です。'
-      : ov.errors.length ? '' : `A面 ${fx(ov.A, 2)}、B面 ${fx(ov.B, 2)} kg/m² → 1本のスタッドが支える分 ${fx(ov.per, 2)} kg/m²（${ov.split ? '千鳥・ダブル・片側壁のため重い方の片面' : '共通配置のため両面の合計'}）。ケイカル板は 公称かさ密度×厚さ で計算。`;
+      : ov.errors.length ? '' : `A面 ${fx(ov.A, 2)}、B面 ${fx(ov.B, 2)} kg/m²（高さを指定したものは壁高で平均）→ ${ov.split ? '千鳥・ダブルのため1本のスタッドは重い方の片面を支えます' : '1本のスタッドが両面を支えます'}。高さを指定すると、その高さまでの部分荷重として計算します。ケイカル板は 公称かさ密度×厚さ で計算。`;
+    const wt = WALLS.find(x => x.id === state.wallType);
+    if (wt && wt.arr === '片側') $('overHint').textContent = `${wt.name}は片面壁です。追加する材料は裏面（スタッド側）ですか？ 裏面（スタッド側）なら面の選択で「裏面」を選んでください。表面はボード側です。 ` + $('overHint').textContent;
   }
   const lw = layersWeight(state.layers, state.basis);
   $('W1Hint').textContent = lw.errors.length ? '' : `W1 = ${fx(lw.W1, 2)} kg/m²`;
@@ -1471,12 +1549,13 @@ async function copyText(t){
 function wireEvents(){
   $('W2').addEventListener('input', () => { state.W2mode = 'manual'; });
   $('wallType').addEventListener('change', e => applyWallType(e.target.value));
-  $('addOver').addEventListener('click', () => { if (!Array.isArray(state.over)) state.over = []; if (state.over.length < 8) { state.over.push({opt:'C:ケイカル板 0.8FK 6mm', n:1, kg:'', face:'A', note:''}); renderOver(); update(); } });
+  $('addOver').addEventListener('click', () => { if (!Array.isArray(state.over)) state.over = []; if (state.over.length < 8) { state.over.push({opt:'C:ケイカル板 0.8FK 6mm', n:1, kg:'', face:'A', note:'', h:''}); renderOver(); update(); } });
   $('over').addEventListener('input', e => {
     const el = e.target.closest('.ov'); if (!el) return; const o = state.over[Number(el.dataset.i)];
     if (e.target.classList.contains('o-n')) o.n = e.target.value;
     if (e.target.classList.contains('o-kg')) o.kg = e.target.value;
     if (e.target.classList.contains('o-note')) o.note = e.target.value;
+    if (e.target.classList.contains('o-h')) o.h = e.target.value;
     update();
   });
   $('over').addEventListener('change', e => {
@@ -1506,6 +1585,7 @@ function wireEvents(){
   });
   $('layers').addEventListener('change', e => {
     const rowEl = e.target.closest('.layer'); if (!rowEl) return;
+    if (e.target.classList.contains('l-face')) { state.layers[Number(rowEl.dataset.i)].face = e.target.value; update(); return; }
     if (e.target.classList.contains('l-id')) {
       state.layers[Number(rowEl.dataset.i)].id = e.target.value;
       delete state.layers[Number(rowEl.dataset.i)].note;
@@ -1517,7 +1597,7 @@ function wireEvents(){
     if (state.layers.length > 1) { state.layers.splice(Number(del.closest('.layer').dataset.i), 1); renderLayers(); update(); }
   });
   $('addLayer').addEventListener('click', () => {
-    if (state.layers.length < 6) { state.layers.push({id:'GB-F 12.5mm', n:1, custom:''}); renderLayers(); update(); }
+    if (state.layers.length < 8) { state.layers.push({id:'GB-R 12.5mm', n:1, face:'A', custom:''}); renderLayers(); update(); }
   });
   $('inputs').addEventListener('submit', e => e.preventDefault());
   $('results').addEventListener('click', e => {
