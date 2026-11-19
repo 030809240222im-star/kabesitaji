@@ -67,6 +67,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 @media (min-width:900px){
   .layout{grid-template-columns:380px minmax(0,1fr);align-items:start}
   #inputs{position:sticky;top:84px;max-height:calc(100vh - 100px);overflow-y:auto}
+  #apForm{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}
 }
 .card{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:16px;min-width:0}
 .card+.card{margin-top:16px}
@@ -123,6 +124,11 @@ details .field:first-of-type{margin-top:12px}
 .row .v .u{color:var(--muted);font-size:12px;margin-left:4px;font-weight:400}
 .row .x{grid-column:1/-1;font-family:var(--font-num);font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
 .row.faint .k,.row.faint .v{color:var(--muted)}
+.row.em .k,.row.em .v{font-weight:700;color:var(--accent)}
+.ap-h{font-size:15px;margin:18px 0 6px;padding-top:10px;border-top:1px solid var(--rule)}
+.ap-sum{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:stretch}
+.ap-sum .tile{min-width:120px}
+.ap-sum .u{color:var(--muted);font-size:12px}
 .props{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0 2px}
 @media (min-width:520px){.props{grid-template-columns:repeat(4,1fr)}}
 .props div{border:1px solid var(--rule);border-radius:8px;padding:6px 10px}
@@ -222,10 +228,11 @@ td.flag{background:var(--warn-bg);color:var(--warn);font-weight:700}
 </head>
 <body>
 <header class="wrap">
-  <p class="eyebrow">軽量鉄骨スタッド（WS形）</p>
+  <p class="eyebrow">軽量鉄骨スタッド（WS形）・外装アルミパネル下地</p>
   <h1>壁下地材強度検討</h1>
   <nav class="tabs" role="tablist" aria-label="表示切り替え">
     <button class="tab" role="tab" id="tab-calc" aria-selected="true" aria-controls="panel-calc">計算</button>
+    <button class="tab" role="tab" id="tab-ap" aria-selected="false" aria-controls="panel-ap">アルミパネル下地</button>
     <button class="tab" role="tab" id="tab-ref" aria-selected="false" aria-controls="panel-ref">資料</button>
     <button class="tab" role="tab" id="tab-cmp" aria-selected="false" aria-controls="panel-cmp">メーカー比較</button>
     <button class="tab" role="tab" id="tab-data" aria-selected="false" aria-controls="panel-data">データ登録</button>
@@ -316,6 +323,109 @@ td.flag{background:var(--warn-bg);color:var(--warn);font-weight:700}
         <textarea id="copyBox" hidden readonly aria-label="コピー用の結果"></textarea>
       </form>
       <div id="results"></div>
+    </div>
+  </section>
+
+  <section id="panel-ap" class="panel" role="tabpanel" aria-labelledby="tab-ap" hidden>
+    <div class="layout">
+      <form id="apForm" class="card" autocomplete="off">
+        <h2>アルミパネル下地（屋外・鋼製下地）</h2>
+        <p class="hint" style="margin-bottom:10px">外装のアルミパネルを受ける胴縁と方立（支柱）を、風圧力に対して検討します。風圧力は告示第1458号（屋外に面する帳壁）、パネルは長方形板の公式、下地ははりの公式で計算します。</p>
+        <div class="trio">
+          <div class="field"><label for="apDate">日付</label><input id="apDate" type="date"></div>
+          <div class="field"><label for="apCompany">検討会社名</label><input id="apCompany" type="text" placeholder="例：〇〇建設株式会社"></div>
+          <div class="field"><label for="apMaker">検討メーカー名</label><input id="apMaker" type="text" placeholder="例：〇〇金属工業株式会社"></div>
+        </div>
+        <div class="field"><label for="apTitle">検討部位（任意）</label><input id="apTitle" type="text" placeholder="例：北面 3〜5階 アルミパネル"></div>
+
+        <h3 class="ap-h">1. 風圧力</h3>
+        <div class="field"><span class="lbl">風圧力の決め方</span>
+          <div class="chips" data-ap="Wmode"><button type="button" class="chip" data-v="auto">告示1458号で計算</button><button type="button" class="chip" data-v="manual">直接入力</button></div></div>
+        <div data-apw="auto">
+          <div class="field"><label for="apV0">基準風速 V0（告示1454号 第2）</label>
+            <div class="unit"><select id="apV0"></select><span>m/s</span></div>
+            <p class="hint">建設地の市町村で決まります（例：東京23区は 34 m/s）。</p></div>
+          <div class="field"><span class="lbl">地表面粗度区分</span>
+            <div class="chips" data-ap="rough"><button type="button" class="chip" data-v="1">Ⅰ</button><button type="button" class="chip" data-v="2">Ⅱ</button><button type="button" class="chip" data-v="3">Ⅲ</button><button type="button" class="chip" data-v="4">Ⅳ</button></div>
+            <p class="hint">一般の市街地はⅢ。海岸沿いなどはⅡ、Ⅳは特定行政庁が定めた区域のみです。</p></div>
+          <div class="dgrid">
+            <div class="field"><label for="apH">建物の基準高さ H</label><div class="unit"><input id="apH" type="number" step="any" inputmode="decimal"><span>m</span></div></div>
+            <div class="field"><label for="apZ">検討部分の高さ Z</label><div class="unit"><input id="apZ" type="number" step="any" inputmode="decimal"><span>m</span></div></div>
+          </div>
+          <p class="hint" style="margin-top:-4px">H は建物の高さと軒の高さの平均。Z は検討するパネルの上端の地盤面からの高さです（H を超える場合は H として計算）。</p>
+          <div class="field"><span class="lbl">部位（負圧）</span>
+            <div class="chips" data-ap="zone"><button type="button" class="chip" data-v="corner">隅角部</button><button type="button" class="chip" data-v="general">一般部</button></div>
+            <p class="hint">隅角部は建物の角から 0.1a′（a′：平面の短辺と 2H の小さい方）の範囲です。迷う場合は隅角部（安全側）。</p></div>
+        </div>
+        <div class="field" data-apw="manual" hidden><label for="apWman">設計風圧力 W（絶対値）</label>
+          <div class="unit"><input id="apWman" type="number" step="any" inputmode="decimal"><span>N/m²</span></div></div>
+
+        <h3 class="ap-h">2. アルミパネル</h3>
+        <div class="field"><span class="lbl">パネルの検討</span>
+          <div class="chips" data-ap="panel"><button type="button" class="chip" data-v="solid">アルミ単板を検討</button><button type="button" class="chip" data-v="none">検討しない</button></div>
+          <p class="hint">アルミ複合板・ハニカムパネルは長方形板の公式が使えないため、メーカーの耐風圧性能で確認してください。</p></div>
+        <div data-app="solid">
+          <div class="dgrid">
+            <div class="field"><label for="apPa">パネルの支持スパン（長辺）a</label><div class="unit"><input id="apPa" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
+            <div class="field"><label for="apPb">パネルの支持スパン（短辺）b</label><div class="unit"><input id="apPb" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
+            <div class="field"><label for="apPt">板厚 t</label><div class="unit"><input id="apPt" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
+            <div class="field"><label for="apPE">ヤング率 E</label><div class="unit"><input id="apPE" type="number" step="any" inputmode="decimal"><span>N/mm²</span></div></div>
+          </div>
+          <div class="field"><label for="apPfa">パネルの許容応力度（短期）</label>
+            <div class="unit"><input id="apPfa" type="number" step="any" inputmode="decimal" placeholder="メーカー値を入力"><span>N/mm²</span></div>
+            <p class="hint">材質・質別で変わるため、メーカーの設計値を入れてください。空欄なら応力度の判定はせず、値だけ表示します。</p></div>
+          <div class="field"><span class="lbl">パネル周辺の支持</span>
+            <div class="chips" data-ap="pfix"><button type="button" class="chip" data-v="simple">4辺単純支持</button><button type="button" class="chip" data-v="fixed">4辺固定</button></div>
+            <p class="hint">折り曲げ・ビス留めのパネルは単純支持（安全側）が目安です。</p></div>
+        </div>
+        <div class="field"><label for="apPmass">パネルの重さ（胴縁の自重の検討に使用）</label>
+          <div class="unit"><input id="apPmass" type="number" step="any" inputmode="decimal"><span>kg/m²</span></div>
+          <p class="hint">アルミ単板 t3.0 は約 8.1 kg/m²（比重 2.7）。補強材・ファスナーを含めた値を入れます。</p></div>
+
+        <h3 class="ap-h">3. 胴縁（パネルを直接受ける部材）</h3>
+        <div class="field"><label for="apS1">部材</label><select id="apS1"></select><p class="hint" id="apS1Dim"></p></div>
+        <div class="field"><span class="lbl">風を受ける向き</span>
+          <div class="chips" data-ap="ax1"><button type="button" class="chip" data-v="x">せい方向（強軸）</button><button type="button" class="chip" data-v="y">幅方向（弱軸）</button></div></div>
+        <div class="field"><label for="apSup1">支持条件</label><select id="apSup1" class="ap-sup"></select></div>
+        <div class="dgrid">
+          <div class="field"><label for="apP1">胴縁ピッチ p1（負担幅）</label><div class="unit"><input id="apP1" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
+          <div class="field"><label for="apL1">支持スパン L1（方立・ブラケットの間隔）</label><div class="unit"><input id="apL1" type="number" step="any" inputmode="decimal"><span>mm</span></div></div>
+        </div>
+        <div class="field"><span class="lbl">自重による曲げ（横胴縁のとき）</span>
+          <div class="chips" data-ap="dead1"><button type="button" class="chip" data-v="on">検討する</button><button type="button" class="chip" data-v="off">検討しない（縦胴縁）</button></div></div>
+        <details><summary>胴縁の詳細設定</summary>
+          <div class="field"><label for="apLb1">横座屈長さ lb（溝形の強軸のみ。空欄 = L1）</label><div class="unit"><input id="apLb1" type="number" step="any" inputmode="decimal" placeholder="L1"><span>mm</span></div></div>
+          <div class="field"><label for="apDen1">たわみの制限 1 /</label><div class="unit"><input id="apDen1" type="number" step="any" inputmode="decimal"><span>1/n</span></div></div>
+        </details>
+
+        <h3 class="ap-h">4. 方立・支柱（胴縁を受ける部材）</h3>
+        <div class="field"><span class="lbl">方立の検討</span>
+          <div class="chips" data-ap="use2"><button type="button" class="chip" data-v="on">検討する</button><button type="button" class="chip" data-v="off">なし（胴縁をブラケットで直接受ける）</button></div></div>
+        <div data-ap2="on">
+          <div class="field"><label for="apS2">部材</label><select id="apS2"></select><p class="hint" id="apS2Dim"></p></div>
+          <div class="field"><span class="lbl">風を受ける向き</span>
+            <div class="chips" data-ap="ax2"><button type="button" class="chip" data-v="x">せい方向（強軸）</button><button type="button" class="chip" data-v="y">幅方向（弱軸）</button></div></div>
+          <div class="field"><label for="apSup2">支持条件</label><select id="apSup2" class="ap-sup"></select></div>
+          <div class="field"><label for="apL2">支点間隔 L2（躯体への取付間隔）</label><div class="unit"><input id="apL2" type="number" step="any" inputmode="decimal"><span>mm</span></div>
+            <p class="hint">方立のピッチは胴縁の支持スパン L1 と同じとして、負担幅を自動で決めます。</p></div>
+          <details><summary>方立の詳細設定</summary>
+            <div class="field"><label for="apLb2">横座屈長さ lb（溝形の強軸のみ。空欄 = L2）</label><div class="unit"><input id="apLb2" type="number" step="any" inputmode="decimal" placeholder="L2"><span>mm</span></div></div>
+            <div class="field"><label for="apDen2">たわみの制限 1 /</label><div class="unit"><input id="apDen2" type="number" step="any" inputmode="decimal"><span>1/n</span></div></div>
+          </details>
+        </div>
+
+        <h3 class="ap-h">5. 取付部（ブラケット・アンカー）</h3>
+        <div class="field"><label for="apRa">1か所あたりの許容耐力（短期）</label>
+          <div class="unit"><input id="apRa" type="number" step="any" inputmode="decimal" placeholder="任意"><span>N</span></div>
+          <p class="hint">アンカー・ボルト・溶接のうち一番弱いものの値。空欄なら反力だけ表示します。</p></div>
+
+        <div class="btns">
+          <button type="button" class="btn primary" id="apPdfBtn" hidden>PDFで発行</button>
+          <button type="button" class="btn" id="apReset">初期値に戻す</button>
+          <span class="toast" id="apToast" role="status"></span>
+        </div>
+      </form>
+      <div id="apResults"></div>
     </div>
   </section>
 
@@ -976,6 +1086,227 @@ function guideCheck(stud, Hcm){
   });
 }
 // </calc>
+// <apcalc>
+/* ===== アルミパネル下地（屋外・鋼製下地）の検討 =====
+   単位：N・mm（風圧力の入力・表示は N/m²）
+   風圧力：平成12年建設省告示第1458号（屋外に面する帳壁）＋第1454号（Er・地表面粗度区分）
+   パネル：長方形板の公式（Roark の近似式。d-engineer.com「長方形板のたわみ・応力計算ツール」と同じ式）
+   下地：はりの公式（単純・連続・固定・片持ち）、許容応力度は短期（風）＝ F、溝形の強軸は横座屈を考慮 */
+const AP_E_STEEL = 205000;         // N/mm²
+const AP_F_STEEL = 235;            // N/mm²（STKR400・SSC400）
+const AP_G = 9.80665;
+const AP_ROUGH = {                  // 告示1454 第1 第2項：Zb, ZG, α
+  1: {Zb:5, ZG:250, al:0.10}, 2: {Zb:5, ZG:350, al:0.15}, 3: {Zb:5, ZG:450, al:0.20}, 4: {Zb:10, ZG:550, al:0.27}
+};
+const AP_GPE = {1: [2.2, 1.9], 2: [2.6, 2.1], 3: [3.1, 2.3], 4: [3.1, 2.3]};   // 告示1458 表9（Z≦5, Z≧40）
+const AP_V0 = [30, 32, 34, 36, 38, 40, 42, 44, 46];
+
+/* はりの係数：M = cM·w·L²、δ = cD·w·L⁴/(EI)、支点反力の最大 = cR·w·L、せん断力の最大 = cQ·w·L、
+   kap：この部材を受ける側の部材に伝わる荷重の割増（受ける部材の負担幅 = スパン × kap） */
+const AP_SUPPORT = {
+  simple:  {name:'単純支持（両端ピン）', cM:1/8,  cD:5/384,   cR:0.5,   cQ:0.5,   kap:1.0,  mExpr:'wL²/8',   dExpr:'5wL⁴/(384EI)'},
+  cont2:   {name:'2スパン連続',          cM:1/8,  cD:1/185,   cR:1.25,  cQ:0.625, kap:1.25, mExpr:'wL²/8（中間支点）', dExpr:'wL⁴/(185EI)'},
+  cont3:   {name:'3スパン以上連続',      cM:1/10, cD:0.00677, cR:1.10,  cQ:0.6,   kap:1.10, mExpr:'wL²/10（第1中間支点）', dExpr:'0.00677wL⁴/(EI)（端スパン）'},
+  propped: {name:'一端固定・他端ピン',    cM:1/8,  cD:1/185,   cR:0.625, cQ:0.625, kap:1.25, mExpr:'wL²/8（固定端）', dExpr:'wL⁴/(185EI)'},
+  fixed:   {name:'両端固定',             cM:1/12, cD:1/384,   cR:0.5,   cQ:0.5,   kap:1.0,  mExpr:'wL²/12（固定端）', dExpr:'wL⁴/(384EI)'},
+  cant:    {name:'片持ち',               cM:1/2,  cD:1/8,     cR:1.0,   cQ:1.0,   kap:1.0,  mExpr:'wL²/2（固定端）', dExpr:'wL⁴/(8EI)'}
+};
+
+/* リップ溝形鋼（JIS G 3350 SSC400）の断面性能：寸法から算定（内側曲げ半径 = t、中心線モデル）。
+   C-100×50×20×2.3 で A 5.172 cm²・Ix 80.7 cm⁴・Zx 16.1 cm³・Iy 19.0 cm⁴（規格表と一致） */
+function apLipC(H, B, C, t){
+  const ri = t, rm = ri + t / 2, xw = t / 2, xl = B - t / 2, yf = H / 2 - t / 2, yl = yf - (C - t / 2);
+  const pts = [[xl, -yl]];
+  const arc = (cx, cy, a0, a1) => { for (let i = 0; i <= 24; i++) { const a = a0 + (a1 - a0) * i / 24; pts.push([cx + rm * Math.cos(a), cy + rm * Math.sin(a)]); } };
+  arc(xl - rm, -yf + rm, 0, -Math.PI / 2); arc(xw + rm, -yf + rm, -Math.PI / 2, -Math.PI);
+  arc(xw + rm, yf - rm, Math.PI, Math.PI / 2); arc(xl - rm, yf - rm, Math.PI / 2, 0);
+  pts.push([xl, yl]);
+  let A = 0, Sx = 0, Ixx = 0, Iyy = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[i + 1], L = Math.hypot(x2 - x1, y2 - y1); if (L < 1e-12) continue;
+    const a = L * t;
+    A += a; Sx += a * (x1 + x2) / 2;
+    Ixx += a * (y1 * y1 + y1 * y2 + y2 * y2) / 3 + t ** 3 * L / 12 * ((x2 - x1) / L) ** 2;
+    Iyy += a * (x1 * x1 + x1 * x2 + x2 * x2) / 3 + t ** 3 * L / 12 * ((y2 - y1) / L) ** 2;
+  }
+  const cx = Sx / A, Iy = Iyy - A * cx * cx;
+  const r3 = v => Number(v.toPrecision(3)), r4 = v => Number(v.toPrecision(4));
+  return {A:r4(A / 100), Ix:r3(Ixx / 1e4), Iy:r3(Iy / 1e4), Zx:r3(Ixx / 1e4 / (H / 20)), Zy:r3(Iy / 1e4 / ((B - cx) / 10)), W:r3(A * 7.85e-3), Cy:r3(cx / 10)};
+}
+const AP_LIPC_DIMS = [[60,30,10,1.6],[60,30,10,2.3],[75,45,15,1.6],[75,45,15,2.3],[75,45,15,3.2],[100,50,20,1.6],[100,50,20,2.3],[100,50,20,3.2],
+  [125,50,20,2.3],[125,50,20,3.2],[150,50,20,2.3],[150,50,20,3.2],[150,65,20,2.3],[150,65,20,3.2]];
+const AP_SECTIONS = [];
+AP_LIPC_DIMS.forEach(([H, B, C, t]) => {
+  const p = apLipC(H, B, C, t);
+  AP_SECTIONS.push(Object.assign({id:`C-${H}×${B}×${C}×${t}`, fam:'C', name:`リップ溝形鋼 C-${H}×${B}×${C}×${t}`, code:'SSC400', H, B, t, F:AP_F_STEEL,
+    src:'JIS G 3350 の寸法から算定（内側曲げ半径 = t）'}, p));
+});
+STUDS.filter(s => s.tube && !s.rot).forEach(s => {
+  const d = s.dim.split('×').map(Number);
+  AP_SECTIONS.push({id:s.id, fam:'P', name:s.name, code:'STKR400', H:d[0], B:d[1], t:d[2], F:AP_F_STEEL, A:s.A, Ix:s.Ix, Iy:s.Iy, Zx:s.Zx, Zy:s.Zy, W:s.W, src:s.src});
+});
+const apSec = id => AP_SECTIONS.find(s => s.id === id);
+
+/* 断面を軸の向きに合わせて mm 単位に。axis 'x'：せい H の方向に風（強軸曲げ）、'y'：幅 B の方向に風（弱軸曲げ） */
+function apOriented(s, axis){
+  const strong = axis !== 'y';
+  return {
+    I: (strong ? s.Ix : s.Iy) * 1e4, Z: (strong ? s.Zx : s.Zy) * 1e3,
+    Id: (strong ? s.Iy : s.Ix) * 1e4, Zd: (strong ? s.Zy : s.Zx) * 1e3,         // 直交方向（自重による曲げ）
+    depth: strong ? s.H : s.B, Aw: s.fam === 'P' ? 2 * ((strong ? s.H : s.B) - 2 * s.t) * s.t : (strong ? (s.H - 2 * s.t) * s.t : 2 * (s.B - 2 * s.t) * s.t),
+    strong
+  };
+}
+/* 短期許容曲げ応力度（N/mm²）。溝形の強軸曲げは横座屈：fb = 89,000/(lb·h/Af)（告示1024号・長期）×1.5、上限 F */
+function apFb(s, axis, lb){
+  const F = s.F;
+  if (s.fam !== 'C' || axis === 'y') return {fb:F, ltb:false};
+  const Af = s.B * s.t, k = lb * s.H / Af, fbL = 89000 / k;
+  return {fb: Math.min(F, 1.5 * Math.min(F / 1.5, fbL)), ltb: 1.5 * fbL < F, k, fbL};
+}
+
+/* 設計風圧力（告示1458・屋外に面する帳壁、閉鎖型の建築物） */
+function apWind(inp){
+  const rg = +inp.rough, R = AP_ROUGH[rg === 4 ? 3 : rg];            // 区分Ⅳは区分Ⅲの Er を用いる（告示1458）
+  const H = +inp.H, Z = Math.min(+inp.Z, H), V0 = +inp.V0;
+  const Hp = Math.max(H, R.Zb);
+  const Er = 1.7 * Math.pow(Hp / R.ZG, R.al);
+  const q = 0.6 * Er * Er * V0 * V0;                                  // N/m²
+  const al = R.al;
+  const Cpe = H <= 5 ? 1.0 : Math.pow(Math.max(Z, 5) / H, 2 * al);   // 表8
+  const g = AP_GPE[rg], Gpe = Z <= 5 ? g[0] : Z >= 40 ? g[1] : g[0] + (g[1] - g[0]) * (Z - 5) / 35;   // 表9
+  const posCpe = Cpe * Gpe, Cfp = posCpe - (-0.5);                     // 表11：外圧が正のとき内圧 -0.5
+  const lerp = (a, b) => H <= 45 ? a : H >= 60 ? b : a + (b - a) * (H - 45) / 15;
+  const negGen = lerp(-1.8, -2.4), negCor = lerp(-2.2, -3.0);         // 表10
+  const Cfn = (inp.zone === 'corner' ? negCor : negGen) - 0;          // 外圧が負のとき内圧 0
+  const Wp = q * Cfp, Wn = q * Cfn;
+  return {Er, q, Hp, Cpe, Gpe, posCpe, Cfp, negGen, negCor, Cfn, Wp, Wn, W: Math.max(Wp, -Wn), gov: Wp >= -Wn ? '正圧' : '負圧', Z, H, V0, rough:rg, al, R};
+}
+
+/* 長方形板（4辺支持・等分布荷重）。a 長辺、b 短辺、t 板厚（mm）、w N/mm² */
+function apPlate(a, b, t, w, E, fixed){
+  if (b > a) [a, b] = [b, a];
+  const r = b / a;
+  const al = fixed ? 0.0284 / (1.056 * r ** 5 + 1) : 0.142 / (2.21 * r ** 3 + 1);
+  const be = fixed ? 1 / (2 * (0.623 * r ** 6 + 1)) : 0.75 / (1.61 * r ** 3 + 1);
+  return {a, b, al, be, delta: al * w * b ** 4 / (E * t ** 3), sigma: be * w * b * b / (t * t)};
+}
+
+/* はり1本の検討。w：風による等分布荷重 N/mm、wd：自重による等分布荷重 N/mm（0 なら検討しない） */
+function apMember(sec, axis, sup, L, w, wd, lb, deflDen, E){
+  const S = AP_SUPPORT[sup], o = apOriented(sec, axis), f = apFb(sec, axis, lb);
+  const M = S.cM * w * L * L, sig = M / o.Z, rb = sig / f.fb;
+  const Q = S.cQ * w * L, tau = Q / o.Aw, fs = sec.F / Math.sqrt(3), rs = tau / fs;
+  const delta = S.cD * w * L ** 4 / (E * o.I), dLim = L / deflDen, rd = delta / dLim;
+  const R = S.cR * w * L;
+  let dead = null;
+  if (wd > 0) {
+    const Md = S.cM * wd * L * L, sd = Md / o.Zd;
+    const fbd = (sec.fam === 'C' && !o.strong) ? apFb(sec, 'x', lb).fb : sec.F;   // 自重は直交方向の曲げ
+    dead = {Md, sd, fbdL: fbd / 1.5, rL: sd / (fbd / 1.5), rC: rb + sd / fbd, fbd};
+  }
+  const ratios = [rb, rs, rd].concat(dead ? [dead.rL, dead.rC] : []);
+  return {sec, axis, S, sup, o, f, L, w, M, sig, rb, Q, tau, fs, rs, delta, dLim, rd, R, dead, deflDen, E, lb,
+    ok: ratios.every(x => x <= 1 + 1e-9), maxRatio: Math.max(...ratios)};
+}
+
+/* この部材のまま成立する最大スパン（mm、10mm 単位で切り捨て） */
+function apMaxSpan(fn){
+  let lo = 1, hi = 20000;
+  if (!fn(lo)) return 0;
+  if (fn(hi)) return hi;
+  for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (fn(m)) lo = m; else hi = m; }
+  return Math.floor(lo / 10) * 10;
+}
+
+const AP_DEFAULTS = {
+  title:'', V0:34, rough:3, H:20, Z:20, zone:'corner', Wmode:'auto', Wman:2000,
+  panel:'solid', pa:1200, pb:600, pt:3, pE:70000, pfa:'', pfix:'simple', pmass:8.1,
+  s1:'C-100×50×20×2.3', ax1:'x', sup1:'cont3', p1:600, L1:1200, lb1:'', dead1:'on', den1:200,
+  use2:'on', s2:'P-100×50×3.2', ax2:'x', sup2:'simple', L2:3000, lb2:'', den2:200,
+  Ra:''
+};
+
+function apCalc(inp){
+  const errs = [];
+  const num = (k, min) => { const v = +inp[k]; if (!Number.isFinite(v) || v <= (min == null ? 0 : min)) errs.push(k); return v; };
+  ['H', 'Z', 'p1', 'L1', 'den1'].forEach(k => num(k));
+  if (inp.use2 === 'on') ['L2', 'den2'].forEach(k => num(k));
+  if (inp.Wmode === 'manual') num('Wman');
+  const s1 = apSec(inp.s1), s2 = apSec(inp.s2);
+  if (!s1) errs.push('s1'); if (inp.use2 === 'on' && !s2) errs.push('s2');
+  if (errs.length) return {ok:false, errs};
+  const wind = apWind(inp);
+  const W = inp.Wmode === 'manual' ? +inp.Wman : wind.W;              // N/m²
+  const Wmm = W / 1e6;                                                // N/mm²
+  // パネル
+  let plate = null;
+  if (inp.panel === 'solid' && +inp.pa > 0 && +inp.pb > 0 && +inp.pt > 0 && +inp.pE > 0) {
+    plate = apPlate(+inp.pa, +inp.pb, +inp.pt, Wmm, +inp.pE, inp.pfix === 'fixed');
+    plate.fa = +inp.pfa > 0 ? +inp.pfa : null;
+    plate.rs = plate.fa ? plate.sigma / plate.fa : null;
+    plate.large = plate.delta > +inp.pt / 2;
+  }
+  // 胴縁
+  const p1 = +inp.p1, L1 = +inp.L1;
+  const w1 = Wmm * p1;
+  const wd1 = inp.dead1 === 'on' ? ((+inp.pmass || 0) * AP_G / 1e6 * p1 + s1.W * AP_G / 1000) : 0;
+  const lb1 = +inp.lb1 > 0 ? +inp.lb1 : L1;
+  const m1 = apMember(s1, inp.ax1, inp.sup1, L1, w1, wd1, lb1, +inp.den1, AP_E_STEEL);
+  m1.p = p1; m1.wd = wd1;
+  m1.maxL = apMaxSpan(L => { const lb = +inp.lb1 > 0 ? +inp.lb1 : L; const wd = wd1; return apMember(s1, inp.ax1, inp.sup1, L, w1, wd, lb, +inp.den1, AP_E_STEEL).ok; });
+  // 方立
+  let m2 = null;
+  if (inp.use2 === 'on') {
+    const L2 = +inp.L2, kap = AP_SUPPORT[inp.sup1].kap, trib = L1 * kap;
+    const w2 = Wmm * trib, lb2 = +inp.lb2 > 0 ? +inp.lb2 : L2;
+    m2 = apMember(s2, inp.ax2, inp.sup2, L2, w2, 0, lb2, +inp.den2, AP_E_STEEL);
+    m2.trib = trib; m2.kap = kap;
+    m2.maxL = apMaxSpan(L => apMember(s2, inp.ax2, inp.sup2, L, w2, 0, +inp.lb2 > 0 ? +inp.lb2 : L, +inp.den2, AP_E_STEEL).ok);
+  }
+  // 取付部（方立がない場合は胴縁の支点反力）
+  const Rkey = m2 ? m2.R : m1.R;
+  const Ra = +inp.Ra > 0 ? +inp.Ra : null;
+  const anchor = {R: Rkey, Ra, r: Ra ? Rkey / Ra : null, from: m2 ? '方立' : '胴縁'};
+  // 総合
+  const checks = [m1.ok, m2 ? m2.ok : true, plate && plate.rs != null ? plate.rs <= 1 : true, anchor.r != null ? anchor.r <= 1 : true];
+  const out = {ok:true, inp, wind, W, Wmm, plate, m1, m2, anchor, overall: checks.every(Boolean)};
+  out.alt = apAlternatives(out);
+  return out;
+}
+
+/* NG のときの対策案：同じ種類で軽い順に、条件を満たす部材とピッチ・スパンの調整 */
+function apAlternatives(r){
+  const inp = r.inp, list = [];
+  const pick = (m, key, axis, sup, L, wOf, wdOf, den, lbIn) => {
+    const fam = m.sec.fam;
+    const cands = AP_SECTIONS.filter(s => s.fam === fam && s.id !== m.sec.id).sort((a, b) => a.W - b.W);
+    for (const s of cands) {
+      const t = apMember(s, axis, sup, L, wOf(s), wdOf(s), lbIn > 0 ? lbIn : L, den, AP_E_STEEL);
+      if (t.ok && s.W >= 0) return {s, t};
+    }
+    const other = AP_SECTIONS.filter(s => s.fam !== fam).sort((a, b) => a.W - b.W);
+    for (const s of other) { const t = apMember(s, axis, sup, L, wOf(s), wdOf(s), lbIn > 0 ? lbIn : L, den, AP_E_STEEL); if (t.ok) return {s, t}; }
+    return null;
+  };
+  if (!r.m1.ok) {
+    const m = r.m1;
+    if (m.maxL > 0) list.push({who:'胴縁', kind:'span', text:`胴縁の支持スパン L1 を ${sgAP(m.maxL)} mm 以下にする（方立・ブラケットを増やす）`, patch:{L1: m.maxL}});
+    const pmax = apMaxSpan(p => apMember(m.sec, inp.ax1, inp.sup1, m.L, r.Wmm * p, inp.dead1 === 'on' ? ((+inp.pmass || 0) * AP_G / 1e6 * p + m.sec.W * AP_G / 1000) : 0, m.lb, +inp.den1, AP_E_STEEL).ok);
+    if (pmax >= 100) list.push({who:'胴縁', kind:'pitch', text:`胴縁ピッチ p1 を ${sgAP(pmax)} mm 以下にする`, patch:{p1: pmax}});
+    const c = pick(m, 's1', inp.ax1, inp.sup1, m.L, () => r.Wmm * m.p, s => inp.dead1 === 'on' ? ((+inp.pmass || 0) * AP_G / 1e6 * m.p + s.W * AP_G / 1000) : 0, +inp.den1, +inp.lb1);
+    if (c) list.push({who:'胴縁', kind:'sec', text:`胴縁を ${c.s.name}（${c.s.code}、${c.s.W} kg/m）に変更（最大比 ${c.t.maxRatio.toFixed(3)}）`, patch:{s1: c.s.id}});
+  }
+  if (r.m2 && !r.m2.ok) {
+    const m = r.m2;
+    if (m.maxL > 0) list.push({who:'方立', kind:'span', text:`方立の支点間隔 L2 を ${sgAP(m.maxL)} mm 以下にする（中間に支持を追加）`, patch:{L2: m.maxL}});
+    const c = pick(m, 's2', inp.ax2, inp.sup2, m.L, () => m.w, () => 0, +inp.den2, +inp.lb2);
+    if (c) list.push({who:'方立', kind:'sec', text:`方立を ${c.s.name}（${c.s.code}、${c.s.W} kg/m）に変更（最大比 ${c.t.maxRatio.toFixed(3)}）`, patch:{s2: c.s.id}});
+  }
+  return list;
+}
+const sgAP = n => Number.isFinite(n) ? Number(Number(n).toPrecision(4)).toLocaleString('en-US', {maximumFractionDigits:8}) : '—';
+// </apcalc>
 
 /* ---------- UI ---------- */
 const $ = id => document.getElementById(id);
@@ -1621,7 +1952,7 @@ function wireEvents(){
     else { box.value = t; box.hidden = false; box.focus(); box.select(); $('toast').textContent = '下の文字を選んでコピーしてください'; }
     setTimeout(() => { $('toast').textContent = ''; }, 3000);
   });
-  const tabs = ['calc','ref','cmp','data','notes'];
+  const tabs = ['calc','ap','ref','cmp','data','notes'];
   tabs.forEach(t => $('tab-' + t).addEventListener('click', () => {
     tabs.forEach(u => { $('tab-' + u).setAttribute('aria-selected', String(u === t)); $('panel-' + u).hidden = u !== t; });
     $('summaryBar').hidden = t !== 'calc';
@@ -1946,16 +2277,19 @@ function reportHeader(r){
 async function buildPdf(){
   const r = current;
   if (!r || !r.ok) throw new Error('入力に不備があります');
+  // ブロック：表紙情報 → 計算の各節 → 目安 → 対策案 → 前提
+  const blocks = [reportHeader(r)];
+  const res = $('results');
+  const order = [...res.querySelectorAll('.card:not(#altCard) .sec')].concat([...res.querySelectorAll('#altCard .sec')]);
+  order.forEach(sec => blocks.push(`<div class="blk">${sec.outerHTML}</div>`));
+  return blocksToPdf(blocks, `${state.date}${state.company ? '　' + state.company : ''}${state.maker ? '　' + state.maker : ''}`);
+}
+async function blocksToPdf(blocks, foot){
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   try { await document.fonts.ready; } catch (e) { /* 無視 */ }
   const host = document.createElement('div'); host.className = 'rpt'; document.body.appendChild(host);
   try {
-    // ブロック：表紙情報 → 計算の各節 → 目安 → 対策案 → 前提
-    const blocks = [reportHeader(r)];
-    const res = $('results');
-    const order = [...res.querySelectorAll('.card:not(#altCard) .sec')].concat([...res.querySelectorAll('#altCard .sec')]);
-    order.forEach(sec => blocks.push(`<div class="blk">${sec.outerHTML}</div>`));
     const pages = [];
     const newPage = () => { const pg = document.createElement('div'); pg.className = 'pg'; pg.innerHTML = '<div class="body"></div>'; host.appendChild(pg); pages.push(pg); return pg.querySelector('.body'); };
     const limit = 1123 - 46 - 56;
@@ -1970,7 +2304,7 @@ async function buildPdf(){
       }
     }
     if (!pages[pages.length - 1].querySelector('.body').children.length) { pages.pop().remove(); }
-    pages.forEach((pg, i) => { const f = document.createElement('div'); f.className = 'foot'; f.innerHTML = `<span>${state.date}${state.company ? '　' + state.company : ''}${state.maker ? '　' + state.maker : ''}</span><span>${i + 1} / ${pages.length}</span>`; pg.appendChild(f); });
+    pages.forEach((pg, i) => { const f = document.createElement('div'); f.className = 'foot'; f.innerHTML = `<span>${esc(foot)}</span><span>${i + 1} / ${pages.length}</span>`; pg.appendChild(f); });
     inlineSvgStyles(host);
     const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
     for (let i = 0; i < pages.length; i++) {
@@ -1993,6 +2327,267 @@ async function issuePdf(){
     $('toast').textContent = code === 'declined' ? '保存をキャンセルしました' : code === 'rate_limited' ? '少し待ってからもう一度押してください' : 'PDFを作成できませんでした' + (e && e.message ? '（' + e.message + '）' : '');
   } finally { btn.disabled = false; setTimeout(() => { $('toast').textContent = ''; }, 5000); }
 }
+/* ===== アルミパネル下地タブ ===== */
+const AP_KEY = 'kabeshitaji-ap-v1';
+let apState = Object.assign({}, AP_DEFAULTS);
+try { const sv = JSON.parse(localStorage.getItem(AP_KEY) || 'null'); if (sv && typeof sv === 'object') apState = Object.assign({}, AP_DEFAULTS, sv); } catch (e) { /* 無視 */ }
+if (!apState.date) apState.date = state.date || todayStr();
+if (apState.company == null) apState.company = state.company || '';
+if (apState.maker == null) apState.maker = state.maker || '';
+const apSave = () => { try { localStorage.setItem(AP_KEY, JSON.stringify(apState)); } catch (e) { /* 無視 */ } };
+const AP_FIELDS = {apDate:'date', apCompany:'company', apMaker:'maker', apTitle:'title', apV0:'V0', apH:'H', apZ:'Z', apWman:'Wman',
+  apPa:'pa', apPb:'pb', apPt:'pt', apPE:'pE', apPfa:'pfa', apPmass:'pmass', apS1:'s1', apSup1:'sup1', apP1:'p1', apL1:'L1', apLb1:'lb1', apDen1:'den1',
+  apS2:'s2', apSup2:'sup2', apL2:'L2', apLb2:'lb2', apDen2:'den2', apRa:'Ra'};
+let apCurrent = null;
+const roman = ['', 'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ'];
+const n1 = v => fx(v, 1), n2 = v => fx(v, 2), n3 = v => fx(v, 3);
+
+function apBuildSelects(){
+  $('apV0').innerHTML = AP_V0.map(v => `<option value="${v}">${v}</option>`).join('');
+  const opts = fam => AP_SECTIONS.filter(s => s.fam === fam).map(s => `<option value="${esc(s.id)}">${esc(s.name)}（${s.W} kg/m）</option>`).join('');
+  const secHtml = `<optgroup label="リップ溝形鋼（SSC400）">${opts('C')}</optgroup><optgroup label="角形鋼管（STKR400）">${opts('P')}</optgroup>`;
+  $('apS1').innerHTML = secHtml; $('apS2').innerHTML = secHtml;
+  const supHtml = Object.entries(AP_SUPPORT).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+  $('apSup1').innerHTML = supHtml; $('apSup2').innerHTML = supHtml;
+}
+function apWrite(){
+  Object.entries(AP_FIELDS).forEach(([id, k]) => { const el = $(id); if (el) el.value = apState[k] == null ? '' : apState[k]; });
+}
+function apSync(){
+  document.querySelectorAll('#apForm .chips[data-ap]').forEach(g => {
+    const cur = String(apState[g.dataset.ap]);
+    g.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.v === cur)));
+  });
+  document.querySelectorAll('#apForm [data-apw]').forEach(el => { el.hidden = el.dataset.apw !== apState.Wmode; });
+  document.querySelectorAll('#apForm [data-app]').forEach(el => { el.hidden = el.dataset.app !== apState.panel; });
+  document.querySelectorAll('#apForm [data-ap2]').forEach(el => { el.hidden = el.dataset.ap2 !== apState.use2; });
+  const dim = (id, sid) => { const s = apSec(sid); $(id).textContent = s ? `A = ${s.A} cm²　Ix = ${s.Ix} cm⁴　Zx = ${s.Zx} cm³　Iy = ${s.Iy} cm⁴　Zy = ${s.Zy} cm³（${s.src}）` : ''; };
+  dim('apS1Dim', apState.s1); dim('apS2Dim', apState.s2);
+}
+
+/* --- 図 --- */
+function apSupportSym(x, y, kind, side){
+  if (kind === 'fix') {
+    const dx = side === 'r' ? 1 : -1;
+    let h = '';
+    for (let i = -18; i <= 12; i += 6) h += ln(x, y + i, x + dx * 7, y + i + 6, '', 'stroke-width="1"');
+    return `<g class="mut">${ln(x, y - 20, x, y + 20, '', 'stroke-width="2"')}${h}</g>`;
+  }
+  return `<g class="mut"><path d="M${x},${y} L${x - 8},${y + 12} L${x + 8},${y + 12} z" fill="none" stroke="currentColor"/>${ln(x - 13, y + 12, x + 13, y + 12)}</g>`;
+}
+function apFigBeam(m, label, wSym, LSym){
+  const sup = m.sup, y = 70, x0 = 24, x1 = 236;
+  const spans = sup === 'cont2' ? 2 : sup === 'cont3' ? 3 : 1;
+  const xs = Array.from({length: spans + 1}, (_, i) => x0 + (x1 - x0) * i / spans);
+  let s = '';
+  // 荷重
+  for (let x = x0 + 4; x <= x1 - 2; x += 14) s += arrow(x, y - 34, x, y - 3, 'red', 1.1);
+  s += `<g class="red">${ln(x0, y - 34, x1, y - 34, '', 'stroke-width="1"')}</g>`;
+  s += `<rect x="${x0}" y="${y - 2.5}" width="${x1 - x0}" height="5" class="acc" fill="currentColor"/>`;
+  // 支点
+  if (sup === 'cant') s += apSupportSym(x0, y, 'fix', 'l');
+  else if (sup === 'fixed') s += apSupportSym(x0, y, 'fix', 'l') + apSupportSym(x1, y, 'fix', 'r');
+  else if (sup === 'propped') s += apSupportSym(x0, y, 'fix', 'l') + apSupportSym(x1, y + 2.5, 'pin');
+  else xs.forEach(x => { s += apSupportSym(x, y + 2.5, 'pin'); });
+  // たわみの形（点線）
+  const defl = sup === 'cant' ? `M${x0},${y} Q${(x0 + x1) / 2},${y} ${x1},${y + 22}` :
+    spans === 1 ? `M${x0},${y} Q${(x0 + x1) / 2},${y + 34} ${x1},${y}` :
+    xs.slice(0, -1).map((x, i) => `${i ? '' : `M${x},${y} `}Q${(x + xs[i + 1]) / 2},${y + 22} ${xs[i + 1]},${y}`).join(' ');
+  s += `<path d="${defl}" fill="none" stroke="currentColor" stroke-dasharray="4 3" class="mut"/>`;
+  // 寸法
+  const yd = y + 34;
+  s += `<g class="mut">${ln(xs[0], yd, xs[1], yd, '', 'stroke-width="1"')}${ln(xs[0], yd - 4, xs[0], yd + 4, '', 'stroke-width="1"')}${ln(xs[1], yd - 4, xs[1], yd + 4, '', 'stroke-width="1"')}</g>`;
+  s += tx((xs[0] + xs[1]) / 2, yd + 15, `${LSym} = ${sgAP(m.L)} mm`, 'n', 'middle');
+  s += tx(x1, y - 40, `${wSym} = ${n3(m.w)} N/mm`, 'n', 'end');
+  return `<figure class="wide"><svg viewBox="0 0 260 130" role="img" aria-label="${label}の計算モデル">${s}</svg><figcaption>${label}：${m.S.name}・風による等分布荷重</figcaption></figure>`;
+}
+function apFigSystem(r){
+  const inp = r.inp, show2 = !!r.m2;
+  // 立面：左右に方立、横に胴縁、パネルの割付
+  const X0 = 30, X1 = 200, Y0 = 20, Y1 = 170;
+  let s = `<rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="${Y1 - Y0}" fill="none" stroke="currentColor" class="mut" stroke-dasharray="2 3"/>`;
+  const rows = 4;
+  for (let i = 0; i <= rows; i++) { const y = Y0 + 10 + i * (Y1 - Y0 - 20) / rows; s += `<rect x="${X0 - 6}" y="${y - 2}" width="${X1 - X0 + 12}" height="4" class="acc" fill="currentColor"/>`; }
+  if (show2) [X0 + 20, X1 - 20].forEach(x => { s += `<rect x="${x - 3.5}" y="${Y0 - 6}" width="7" height="${Y1 - Y0 + 12}" fill="currentColor" opacity=".55"/>`; });
+  const yA = Y0 + 10, yB = Y0 + 10 + (Y1 - Y0 - 20) / rows;
+  s += vdim(X1 + 14, yA, yB, `p1 = ${sgAP(r.m1.p)}`);
+  const xa = show2 ? X0 + 20 : X0 + 10, xb = show2 ? X1 - 20 : X1 - 10;
+  s += `<g class="mut">${ln(xa, Y1 + 14, xb, Y1 + 14, '', 'stroke-width="1"')}${ln(xa, Y1 + 10, xa, Y1 + 18, '', 'stroke-width="1"')}${ln(xb, Y1 + 10, xb, Y1 + 18, '', 'stroke-width="1"')}</g>`;
+  s += tx((xa + xb) / 2, Y1 + 29, `L1 = ${sgAP(r.m1.L)} mm`, 'n', 'middle');
+  s += tx(X0 - 8, Y0 + 4, '胴縁', 't', 'end');
+  if (show2) s += tx(X0 + 20, Y0 - 9, '方立', 't', 'middle');
+  return `<figure class="wide"><svg viewBox="0 0 270 210" role="img" aria-label="下地の構成（立面）">${s}</svg><figcaption>下地の構成（立面）：胴縁 ${esc(r.m1.sec.id)} @${sgAP(r.m1.p)}${show2 ? `、方立 ${esc(r.m2.sec.id)} @${sgAP(r.m1.L)}` : ''}</figcaption></figure>`;
+}
+
+/* --- 結果 --- */
+function apMemberRows(m, key, label){
+  const s = m.sec, o = m.o, LSym = key === 1 ? 'L1' : 'L2';
+  const fbExpr = m.f.ltb ? `横座屈：1.5 × 89,000 / (lb·h/Af) = 1.5 × 89,000 / (${sgAP(m.lb)} × ${s.H} / (${s.B} × ${s.t}))` : (s.fam === 'C' && o.strong ? `横座屈の低減なし（上限 F = ${s.F}）` : `閉断面または弱軸曲げのため fb = F`);
+  let h = '';
+  h += row('部材', '', `${esc(s.name)}`, '');
+  h += row('断面性能（風の方向）', o.strong ? '強軸' : '弱軸', `I = ${sgAP(o.I / 1e4)} cm⁴　Z = ${sgAP(o.Z / 1e3)} cm³`, '');
+  h += key === 1 ? row('風による等分布荷重 <small>w = W × p1</small>', `${n2(apCurrent.W)} × 10⁻⁶ × ${sgAP(m.p)}`, n3(m.w), 'N/mm')
+                 : row('風による等分布荷重 <small>w = W × L1 × κ</small>', `${n2(apCurrent.W)} × 10⁻⁶ × ${sgAP(apCurrent.m1.L)} × ${m.kap}（胴縁の支点反力の割増）`, n3(m.w), 'N/mm');
+  h += row(`最大曲げモーメント <small>M = ${m.S.mExpr}</small>`, `${sgAP(m.S.cM)} × ${n3(m.w)} × ${sgAP(m.L)}²`, fx(m.M / 1000, 1), 'N·m');
+  h += row('曲げ応力度 <small>σ = M / Z</small>', `${fx(m.M, 0)} / ${fx(o.Z, 0)}`, n1(m.sig), 'N/mm²');
+  h += row('短期許容曲げ応力度 <small>fb</small>', fbExpr, n1(m.f.fb), 'N/mm²');
+  h += judge('曲げ σ / fb', n3(m.rb), '≦ 1', m.rb, m.rb <= 1, `${n1(m.sig)} / ${n1(m.f.fb)}`);
+  h += judge('せん断 τ / fs', n3(m.rs), '≦ 1', m.rs, m.rs <= 1, `τ = Q / Aw = ${fx(m.Q, 0)} / ${fx(o.Aw, 0)} = ${n1(m.tau)}、fs = F / √3 = ${n1(m.fs)} N/mm²`);
+  h += judge(`たわみ δ / (${LSym}/${sgAP(m.deflDen)})`, n3(m.rd), '≦ 1', m.rd, m.rd <= 1, `δ = ${m.S.dExpr} = ${n2(m.delta)} mm ≦ ${n2(m.dLim)} mm（E = ${fx(m.E, 0)} N/mm²）`);
+  if (m.dead) {
+    const d = m.dead;
+    h += row('自重による等分布荷重 <small>wd</small>', `パネル ${sgAP(+apCurrent.inp.pmass || 0)} kg/m² × ${sgAP(m.p)} mm ＋ 胴縁 ${s.W} kg/m`, fx(m.wd, 4), 'N/mm');
+    h += row('自重による曲げ応力度 <small>σd = Md / Zd</small>', `直交方向 Zd = ${sgAP(o.Zd / 1e3)} cm³`, n1(d.sd), 'N/mm²');
+    h += judge('長期（自重）σd / fb長期', n3(d.rL), '≦ 1', d.rL, d.rL <= 1, `${n1(d.sd)} / ${n1(d.fbdL)}`);
+    h += judge('短期（風＋自重）σ/fb ＋ σd/fbd', n3(d.rC), '≦ 1', d.rC, d.rC <= 1, `${n3(m.rb)} ＋ ${n1(d.sd)} / ${n1(d.fbd)}`);
+  }
+  h += row('支点反力の最大 <small>R = ' + sgAP(m.S.cR) + 'wL</small>', '', fx(m.R, 0), 'N');
+  h += row(`この部材のまま成立する最大の ${LSym}`, '曲げ・せん断・たわみのすべてを満たす長さ（10mm 単位）', m.maxL > 0 ? sgAP(m.maxL) : '—', 'mm');
+  return h;
+}
+function apRender(){
+  const r = apCurrent = apCalc(apState);
+  const box = $('apResults');
+  document.querySelectorAll('#apForm [aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+  if (!r.ok) {
+    const map = Object.fromEntries(Object.entries(AP_FIELDS).map(([id, k]) => [k, id]));
+    r.errs.forEach(k => { const el = $(map[k]); if (el) el.setAttribute('aria-invalid', 'true'); });
+    box.innerHTML = `<div class="card err"><h2>入力を確認してください</h2><p>赤枠の欄に 0 より大きい数値を入れてください。</p></div>`;
+    $('apPdfBtn').disabled = true;
+    return;
+  }
+  $('apPdfBtn').disabled = false;
+  const w = r.wind, inp = r.inp;
+  const verdicts = [['胴縁', r.m1.ok, r.m1.maxRatio]].concat(r.m2 ? [['方立', r.m2.ok, r.m2.maxRatio]] : [])
+    .concat(r.plate && r.plate.rs != null ? [['パネル', r.plate.rs <= 1, r.plate.rs]] : [])
+    .concat(r.anchor.r != null ? [['取付部', r.anchor.r <= 1, r.anchor.r]] : []);
+  let h = `<div class="card"><div class="sec"><h3>判定のまとめ</h3>
+    <div class="ap-sum"><span class="pill ${r.overall ? '' : 'ng'}"><small>総合</small><b>${r.overall ? 'OK' : 'NG'}</b></span>
+    ${verdicts.map(v => `<span class="tile ${v[1] ? '' : 'ng'}"><small>${v[0]}（最大の比）</small><b>${n3(v[2])}</b><i style="color:var(${v[1] ? '--ok' : '--ng'})">${v[1] ? 'OK' : 'NG'}</i></span>`).join('')}
+    <span class="tile"><small>設計風圧力 W</small><b>${fx(r.W, 0)}</b> <span class="u">N/m²</span></span></div></div></div>`;
+  if (r.alt.length || !r.overall) {
+    h += `<div class="card" id="apAltCard"><div class="sec"><h3>NG の対策</h3><div class="alts" style="margin-top:8px">` +
+      (r.alt.length ? r.alt.map((a, i) => `<div class="alt"><div><b>${a.who}：${a.kind === 'sec' ? '部材を変更' : a.kind === 'pitch' ? 'ピッチを詰める' : 'スパンを詰める'}</b><p class="hint">${esc(a.text)}</p></div><button type="button" class="btn primary ap-alt" data-i="${i}">この案で計算</button></div>`).join('')
+        : `<div class="alt none" style="border-color:var(--ng)"><div><b>部材の変更では解決しません</b><p class="hint">支点を増やす、下地の構成を見直すなど、構造設計者による個別検討が必要です。</p></div></div>`) +
+      `</div><p class="hint alt-note" style="margin-top:8px">部材の変更案は、同じ種類（溝形・角パイプ）の中で重さが軽い順に探し、なければもう一方の種類から探しています。</p></div></div>`;
+  }
+  // 風圧力
+  h += `<div class="card"><div class="sec"><h3>① 設計風圧力 <small>${inp.Wmode === 'manual' ? '直接入力' : '告示第1458号（屋外に面する帳壁・閉鎖型）'}</small></h3>`;
+  if (inp.Wmode === 'manual') h += row('設計風圧力 <small>W</small>', '直接入力', fx(r.W, 0), 'N/m²');
+  else {
+    h += row('基準風速 <small>V0</small>', '', w.V0, 'm/s');
+    h += row('地表面粗度区分', w.rough === 4 ? 'Er はⅢの値を用いる（告示1458）' : `Zb = ${w.R.Zb} m、ZG = ${w.R.ZG} m、α = ${w.al}`, roman[w.rough], '');
+    h += row('<small>Er = 1.7 (H′/ZG)^α</small>', `H′ = max(H, Zb) = ${sgAP(w.Hp)} m`, fx(w.Er, 4), '');
+    h += row('平均速度圧 <small>q = 0.6 Er² V0²</small>', `0.6 × ${fx(w.Er, 4)}² × ${w.V0}²`, n1(w.q), 'N/m²');
+    h += row('正のピーク外圧係数 <small>Cpe × Gpe</small>', `Cpe = ${w.H <= 5 ? '1.0（H≦5）' : `(${sgAP(Math.max(w.Z, 5))}/${sgAP(w.H)})^(2×${w.al}) = ${fx(w.Cpe, 3)}`}、Gpe = ${fx(w.Gpe, 3)}（Z = ${sgAP(w.Z)} m）`, fx(w.posCpe, 3), '');
+    h += row('正圧のピーク風力係数 <small>Cf = Cpe·Gpe − (−0.5)</small>', '内圧係数 −0.5（閉鎖型）', fx(w.Cfp, 3), '');
+    h += row('正圧 <small>W+ = q × Cf</small>', '', fx(w.Wp, 0), 'N/m²');
+    h += row(`負のピーク外圧係数 <small>${inp.zone === 'corner' ? '隅角部' : '一般部'}</small>`, `一般部 ${fx(w.negGen, 2)}、隅角部 ${fx(w.negCor, 2)}（H = ${sgAP(w.H)} m）、内圧係数 0`, fx(w.Cfn, 2), '');
+    h += row('負圧 <small>W− = q × Cf</small>', '', fx(w.Wn, 0), 'N/m²');
+    h += row('設計風圧力 <small>W = max(W+, |W−|)</small>', `${w.gov}が大きい`, fx(r.W, 0), 'N/m²', 'em');
+  }
+  h += `</div></div>`;
+  // パネル
+  if (r.plate) {
+    const p = r.plate;
+    h += `<div class="card"><div class="sec"><h3>② アルミパネル <small>長方形板・等分布荷重（${inp.pfix === 'fixed' ? '4辺固定' : '4辺単純支持'}）</small></h3>`;
+    h += row('支持スパン <small>a × b（a ≧ b）</small>', '', `${sgAP(p.a)} × ${sgAP(p.b)}`, 'mm');
+    h += row('係数 <small>α, β</small>', inp.pfix === 'fixed' ? `α = 0.0284 / (1.056(b/a)⁵ + 1)、β = 1 / (2(0.623(b/a)⁶ + 1))` : `α = 0.142 / (2.21(b/a)³ + 1)、β = 0.75 / (1.61(b/a)³ + 1)`, `${fx(p.al, 4)}, ${fx(p.be, 4)}`, '');
+    h += row('最大応力度 <small>σ = β w b² / t²</small>', `${fx(p.be, 4)} × ${fx(r.Wmm, 6)} × ${sgAP(p.b)}² / ${sgAP(+inp.pt)}²`, n1(p.sigma), 'N/mm²');
+    if (p.fa) h += judge('パネル σ / fa', n3(p.rs), '≦ 1', p.rs, p.rs <= 1, `${n1(p.sigma)} / ${n1(p.fa)}（入力した許容応力度）`);
+    else h += `<p class="note">許容応力度が未入力のため、パネルの応力度は判定していません。</p>`;
+    h += row('最大たわみ <small>δ = α w b⁴ / (E t³)</small>', `E = ${fx(+inp.pE, 0)} N/mm²`, n2(p.delta), 'mm');
+    if (p.large) h += `<p class="note">たわみが板厚の 1/2 を超えています。この式（微小たわみ理論）は大たわみになると応力・たわみを大きめに出します。外観上のたわみ（ベコつき）もメーカーに確認してください。</p>`;
+    h += `</div></div>`;
+  }
+  // 胴縁・方立
+  h += `<div class="card"><div class="sec"><h3>${r.plate ? '③' : '②'} 胴縁 <small>${esc(r.m1.sec.id)} @${sgAP(r.m1.p)}、スパン ${sgAP(r.m1.L)} mm</small></h3>
+    <div class="fig">${apFigSystem(r)}${apFigBeam(r.m1, '胴縁', 'w', 'L1')}</div>${apMemberRows(r.m1, 1)}</div></div>`;
+  let no = r.plate ? 4 : 3;
+  const circ = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦'];
+  if (r.m2) {
+    h += `<div class="card"><div class="sec"><h3>${circ[no++]} 方立・支柱 <small>${esc(r.m2.sec.id)} @${sgAP(r.m1.L)}、支点間隔 ${sgAP(r.m2.L)} mm</small></h3>
+      <div class="fig">${apFigBeam(r.m2, '方立', 'w', 'L2')}</div>${apMemberRows(r.m2, 2)}</div></div>`;
+  }
+  const a = r.anchor;
+  h += `<div class="card"><div class="sec"><h3>${circ[no++]} 取付部 <small>${a.from}の支点反力</small></h3>
+    ${row('1か所あたりの反力 <small>R</small>', `${a.from}の支点反力の最大（風）`, fx(a.R, 0), 'N')}
+    ${a.Ra ? judge('取付部 R / Ra', n3(a.r), '≦ 1', a.r, a.r <= 1, `${fx(a.R, 0)} / ${fx(a.Ra, 0)}（入力した許容耐力）`) : '<p class="note">許容耐力が未入力のため、反力だけ示しています。ブラケット・アンカー・溶接の耐力で確認してください。</p>'}</div></div>`;
+  h += `<div class="card"><div class="sec"><h3>この計算の前提 <small>結果を渡すときに添えてください</small></h3><ul style="margin:8px 0 0;padding-left:20px;display:grid;gap:6px;font-size:13.5px">${apPremises(r).map(t => `<li>${t}</li>`).join('')}</ul></div></div>`;
+  box.innerHTML = h;
+}
+function apPremises(r){
+  return [
+    '風圧力は平成12年建設省告示第1458号（屋根ふき材及び屋外に面する帳壁）により、閉鎖型の建築物として計算しています（ピーク内圧係数：外圧が正のとき −0.5、負のとき 0）。開放型の建築物、高さ13m以下で告示の適用外となる部分、風洞実験による場合は、W を直接入力してください。',
+    '正圧と負圧の大きい方を設計風圧力とし、下地の曲げ・たわみはその絶対値で検討しています。',
+    'アルミパネルは、長方形板の公式（Roark の近似式。d-engineer.com「長方形板のたわみ・応力計算ツール」と同じ式）による参考計算です。ポアソン比 0.3 相当の係数で、微小たわみ理論です。アルミ複合板・ハニカムパネルには使えません。',
+    `下地の鋼材は E = ${fx(AP_E_STEEL, 0)} N/mm²、F = ${AP_F_STEEL} N/mm²（STKR400・SSC400）。風は短期荷重として許容曲げ応力度 fb = F、許容せん断応力度 fs = F/√3 とし、リップ溝形鋼の強軸曲げは横座屈（fb = 89,000/(lb·h/Af) × 1.5、告示第1024号）で低減しています。`,
+    'リップ溝形鋼の断面性能は JIS G 3350 の寸法から算定しています（内側曲げ半径 = t。規格表の値と一致することを確認済み）。',
+    '方立は、胴縁からの荷重を等分布荷重に置き換えて検討しています。胴縁が連続のときは中間支点の反力が大きくなるため、負担幅を L1 × κ（2スパン 1.25、3スパン以上 1.10、一端固定 1.25）としています。',
+    '取付部（ブラケット・アンカー・ボルト・溶接）、パネルの留め付けビスの耐力、躯体側の検討、地震時の層間変位への追従は、この計算に含まれていません。',
+    'この計算は検討の目安です。確認申請・構造計算書として提出する場合は、構造設計者の確認を受けてください。'
+  ];
+}
+
+/* --- PDF --- */
+function apReportHeader(r){
+  const rows = [['日付', esc(apState.date)], ['検討会社', esc(apState.company || '—')], ['検討メーカー', esc(apState.maker || '—')]]
+    .concat(apState.title ? [['検討部位', esc(apState.title)]] : [])
+    .concat([['設計風圧力', `${fx(r.W, 0)} N/m²（${r.inp.Wmode === 'manual' ? '直接入力' : `告示1458号、V0 = ${r.wind.V0} m/s、粗度区分${roman[r.wind.rough]}、H = ${sgAP(r.wind.H)} m、${r.inp.zone === 'corner' ? '隅角部' : '一般部'}`}）`],
+      ['胴縁', `${esc(r.m1.sec.name)} @${sgAP(r.m1.p)}、スパン ${sgAP(r.m1.L)} mm（${r.m1.S.name}）`]])
+    .concat(r.m2 ? [['方立', `${esc(r.m2.sec.name)} @${sgAP(r.m1.L)}、支点間隔 ${sgAP(r.m2.L)} mm（${r.m2.S.name}）`]] : [])
+    .concat([['総合判定', `<span class="verdict ${r.overall ? 'ok' : 'ng'}">${r.overall ? 'OK' : 'NG'}</span>　胴縁 ${n3(r.m1.maxRatio)}${r.m2 ? `、方立 ${n3(r.m2.maxRatio)}` : ''}${r.plate && r.plate.rs != null ? `、パネル ${n3(r.plate.rs)}` : ''}${r.anchor.r != null ? `、取付部 ${n3(r.anchor.r)}` : ''}`]]);
+  return `<div class="blk"><h1>アルミパネル下地強度検討書</h1>
+    <p class="sub">外装アルミパネル 鋼製下地（風圧力に対する許容応力度検討）</p>
+    <table class="kv">${rows.map(x => `<tr><th>${x[0]}</th><td>${x[1]}</td></tr>`).join('')}</table></div>`;
+}
+async function apIssuePdf(){
+  const btn = $('apPdfBtn'), toast = $('apToast'); btn.disabled = true; toast.textContent = 'PDFを作成中…';
+  try {
+    const r = apCurrent;
+    if (!r || !r.ok) throw new Error('入力に不備があります');
+    const secs = [...$('apResults').querySelectorAll('.card:not(#apAltCard) .sec')].slice(1).concat([...$('apResults').querySelectorAll('#apAltCard .sec')]);
+    const blocks = [apReportHeader(r)].concat(secs.map(s => `<div class="blk">${s.outerHTML}</div>`));
+    const foot = `${apState.date}${apState.company ? '　' + apState.company : ''}${apState.maker ? '　' + apState.maker : ''}`;
+    const blob = await blocksToPdf(blocks, foot);
+    const name = `アルミパネル下地強度検討_${(apState.title || '').replace(/[\\/:*?"<>|\s・（）()]+/g, '')}${apState.title ? '_' : ''}${apState.date}.pdf`;
+    saveBlob(blob, name);
+    toast.textContent = 'PDFを発行しました';
+  } catch (e) {
+    const code = e && e.code;
+    toast.textContent = code === 'declined' ? '保存をキャンセルしました' : code === 'rate_limited' ? '少し待ってからもう一度押してください' : 'PDFを作成できませんでした' + (e && e.message ? '（' + e.message + '）' : '');
+  } finally { btn.disabled = false; setTimeout(() => { toast.textContent = ''; }, 5000); }
+}
+
+function apWire(){
+  const form = $('apForm');
+  form.addEventListener('input', e => {
+    const k = AP_FIELDS[e.target.id]; if (!k) return;
+    apState[k] = e.target.value; apSave(); apSync(); apRender();
+  });
+  form.addEventListener('change', e => {
+    const k = AP_FIELDS[e.target.id]; if (!k) return;
+    apState[k] = e.target.value; apSave(); apSync(); apRender();
+  });
+  form.addEventListener('click', e => {
+    const c = e.target.closest('.chips[data-ap] .chip'); if (!c) return;
+    const k = c.closest('.chips').dataset.ap;
+    apState[k] = /^\d+$/.test(c.dataset.v) && k === 'rough' ? +c.dataset.v : c.dataset.v;
+    apSave(); apSync(); apRender();
+  });
+  $('apReset').addEventListener('click', () => {
+    const keep = {date: apState.date, company: apState.company, maker: apState.maker, title: apState.title};
+    apState = Object.assign({}, AP_DEFAULTS, keep); apSave(); apWrite(); apSync(); apRender();
+  });
+  $('apResults').addEventListener('click', e => {
+    const b = e.target.closest('.ap-alt'); if (!b || !apCurrent) return;
+    const a = apCurrent.alt[+b.dataset.i]; if (!a) return;
+    Object.assign(apState, a.patch); apSave(); apWrite(); apSync(); apRender();
+    try { $('apResults').scrollIntoView({behavior:'smooth'}); } catch (err) { /* 無視 */ }
+  });
+}
+function apInit(){ apBuildSelects(); apWrite(); apSync(); apWire(); apRender(); }
+
 function saveBlob(blob, name){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
@@ -2000,6 +2595,8 @@ function saveBlob(blob, name){
 }
 $('pdfBtn').hidden = false;
 $('pdfBtn').addEventListener('click', issuePdf);
+$('apPdfBtn').hidden = false;
+$('apPdfBtn').addEventListener('click', apIssuePdf);
 
 buildSelects();
 buildWallTypes();
@@ -2009,6 +2606,7 @@ buildReference();
 buildNotes();
 wireEvents();
 update();
+apInit();
 </script>
 </body>
 </html>
